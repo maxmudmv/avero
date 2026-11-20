@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.*
+
+# Next.js
+/.next/
+/out/
+
+# Build & Testing
+/build
+/coverage
+/playwright-report
+/test-results
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment variables (NEVER commit real secrets)
+.env
+.env.*
+!.env.example
+
+# Local databases / scratch
+/.local-pg/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

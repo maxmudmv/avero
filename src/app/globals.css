@@ -1,0 +1,283 @@
+@import "tailwindcss";
+
+@property --lg-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 132deg;
+}
+
+@property --lg-angle-alt {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 224deg;
+}
+
+:root {
+  --lg-angle: 132deg;
+  --lg-angle-alt: 224deg;
+
+  /* Default OLED Matte Dark tokens */
+  --bg-canvas: #060709;
+  --bg-elevated: #0c0e13;
+  --surface-matte: rgba(18, 20, 26, 0.94);
+  --surface-matte-hover: rgba(24, 27, 35, 0.96);
+  --surface-input: rgba(11, 13, 18, 0.92);
+  --surface-backdrop: rgba(3, 4, 7, 0.72);
+
+  --border-matte: rgba(255, 255, 255, 0.075);
+  --border-matte-hover: rgba(255, 255, 255, 0.14);
+
+  --text-primary: #f5f7fa;
+  --text-secondary: rgba(235, 240, 250, 0.7);
+  --text-muted: rgba(235, 240, 250, 0.44);
+
+  --glass-fill: rgba(255, 255, 255, 0.055);
+  --glass-fill-hover: rgba(255, 255, 255, 0.095);
+  --glass-fill-subtle: rgba(255, 255, 255, 0.032);
+  --glass-shadow:
+    0 10px 30px -10px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+  --matte-shadow:
+    0 12px 32px -14px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+
+  --glare-color: rgba(255, 255, 255, 0.34);
+  --focus-ring: rgba(125, 211, 252, 0.55);
+
+  /* Prismatic rainbow-white rim stops */
+  --prism-1: rgba(255, 255, 255, 0.72);
+  --prism-2: rgba(168, 224, 255, 0.58);
+  --prism-3: rgba(226, 198, 255, 0.5);
+  --prism-4: rgba(255, 212, 232, 0.46);
+  --prism-5: rgba(255, 255, 255, 0.14);
+  --prism-6: rgba(158, 242, 232, 0.54);
+
+  --font-sans: "Inter Variable", "Inter", "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Inter Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg-canvas: #f2f4f8;
+    --bg-elevated: #f8f9fc;
+    --surface-matte: rgba(255, 255, 255, 0.88);
+    --surface-matte-hover: rgba(255, 255, 255, 0.96);
+    --surface-input: rgba(255, 255, 255, 0.78);
+    --surface-backdrop: rgba(15, 23, 42, 0.28);
+
+    --border-matte: rgba(15, 23, 42, 0.075);
+    --border-matte-hover: rgba(15, 23, 42, 0.14);
+
+    --text-primary: #0b0e14;
+    --text-secondary: rgba(15, 23, 42, 0.66);
+    --text-muted: rgba(15, 23, 42, 0.45);
+
+    --glass-fill: rgba(255, 255, 255, 0.46);
+    --glass-fill-hover: rgba(255, 255, 255, 0.66);
+    --glass-fill-subtle: rgba(255, 255, 255, 0.28);
+    --glass-shadow:
+      0 10px 28px -10px rgba(15, 23, 42, 0.14),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+    --matte-shadow:
+      0 10px 28px -14px rgba(15, 23, 42, 0.1),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.92);
+
+    --glare-color: rgba(255, 255, 255, 0.78);
+    --focus-ring: rgba(56, 189, 248, 0.55);
+
+    --prism-1: rgba(255, 255, 255, 0.95);
+    --prism-2: rgba(110, 195, 255, 0.55);
+    --prism-3: rgba(196, 165, 255, 0.48);
+    --prism-4: rgba(255, 175, 210, 0.44);
+    --prism-5: rgba(15, 23, 42, 0.09);
+    --prism-6: rgba(94, 234, 212, 0.52);
+  }
+}
+
+:root[data-theme="light"] {
+  --bg-canvas: #f2f4f8;
+  --bg-elevated: #f8f9fc;
+  --surface-matte: rgba(255, 255, 255, 0.88);
+  --surface-matte-hover: rgba(255, 255, 255, 0.96);
+  --surface-input: rgba(255, 255, 255, 0.78);
+  --surface-backdrop: rgba(15, 23, 42, 0.28);
+
+  --border-matte: rgba(15, 23, 42, 0.075);
+  --border-matte-hover: rgba(15, 23, 42, 0.14);
+
+  --text-primary: #0b0e14;
+  --text-secondary: rgba(15, 23, 42, 0.66);
+  --text-muted: rgba(15, 23, 42, 0.45);
+
+  --glass-fill: rgba(255, 255, 255, 0.46);
+  --glass-fill-hover: rgba(255, 255, 255, 0.66);
+  --glass-fill-subtle: rgba(255, 255, 255, 0.28);
+  --glass-shadow:
+    0 10px 28px -10px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  --matte-shadow:
+    0 10px 28px -14px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.92);
+
+  --glare-color: rgba(255, 255, 255, 0.78);
+  --focus-ring: rgba(56, 189, 248, 0.55);
+
+  --prism-1: rgba(255, 255, 255, 0.95);
+  --prism-2: rgba(110, 195, 255, 0.55);
+  --prism-3: rgba(196, 165, 255, 0.48);
+  --prism-4: rgba(255, 175, 210, 0.44);
+  --prism-5: rgba(15, 23, 42, 0.09);
+  --prism-6: rgba(94, 234, 212, 0.52);
+}
+
+html {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+/* --- OLED Matte Surface --- */
+.oled-matte-card {
+  background: var(--surface-matte);
+  border: 1px solid var(--border-matte);
+  box-shadow: var(--matte-shadow);
+}
+
+:root[data-theme="light"] .oled-matte-card,
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .oled-matte-card {
+    background-image: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.94) 0%,
+      rgba(246, 248, 252, 0.88) 100%
+    );
+  }
+}
+
+/* --- Apple Liquid Glass Surface --- */
+.liquid-glass {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--glass-fill);
+  background-image: linear-gradient(
+    var(--lg-angle-alt),
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(195, 230, 255, 0.05) 36%,
+    rgba(255, 255, 255, 0.01) 62%,
+    rgba(230, 200, 255, 0.08) 100%
+  );
+  -webkit-backdrop-filter: blur(22px) saturate(195%);
+  backdrop-filter: blur(22px) saturate(195%);
+  box-shadow: var(--glass-shadow);
+  will-change: transform;
+}
+
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--lg-angle) at 50% 50%,
+    var(--prism-1) 0deg,
+    var(--prism-2) 55deg,
+    var(--prism-3) 115deg,
+    var(--prism-4) 175deg,
+    var(--prism-5) 235deg,
+    var(--prism-6) 295deg,
+    var(--prism-1) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Radial pointer/touch glare layer */
+.liquid-glass-glare {
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass-glare::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    130px circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    var(--glare-color),
+    transparent 68%
+  );
+  opacity: var(--glare-opacity, 0);
+  transition: opacity 180ms ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Low-power / mobile device optimization */
+:root[data-perf-tier="eco"] .liquid-glass {
+  -webkit-backdrop-filter: blur(14px) saturate(165%);
+  backdrop-filter: blur(14px) saturate(165%);
+}
+
+/* Accessible focus halo */
+.glass-focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--bg-canvas),
+    0 0 0 4px var(--focus-ring),
+    var(--glass-shadow);
+}
+
+/* Hide scrollbar for single-row horizontal filter pills */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Reduced motion & reduced transparency accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass,
+  .liquid-glass-glare::after,
+  body {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--surface-matte);
+  }
+}
+
+/* Telegram Mini App viewport & safe-area adaptation */
+:root[data-tma="true"] body {
+  min-height: var(--tg-viewport-stable-height, 100dvh);
+  padding-top: var(--tg-safe-top, 0px);
+  padding-bottom: var(--tg-safe-bottom, 0px);
+  overscroll-behavior-y: contain;
+}

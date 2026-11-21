@@ -123,7 +123,7 @@ export default function FeedPage() {
                     layoutId="avero-feed-filter-pill"
                     transition={LIQUID_TAB_SPRING}
                     aria-hidden="true"
-                    className="liquid-glass absolute inset-0 rounded-full"
+                    className="absolute inset-0 rounded-full border border-[var(--border-matte-hover)] bg-white/[0.09] backdrop-blur-md"
                   />
                 ) : null}
                 <span className="relative z-10">{chip.label}</span>

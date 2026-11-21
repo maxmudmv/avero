@@ -25,20 +25,20 @@ export interface GlassButtonProps
 }
 
 const SIZE_CLASSES: Record<GlassButtonSize, string> = {
-  sm: "h-9 px-3.5 text-[13px] rounded-xl gap-1.5",
-  md: "h-11 px-5 text-[14px] rounded-2xl gap-2",
-  lg: "h-12 px-6 text-[15px] rounded-2xl gap-2.5",
+  sm: "h-9 px-4 text-[13px] rounded-full gap-1.5",
+  md: "h-11 px-5 text-[14px] rounded-full gap-2",
+  lg: "h-12 px-6 text-[15px] rounded-full gap-2.5",
   icon: "h-10 w-10 p-0 rounded-full",
 };
 
 const VARIANT_CLASSES: Record<GlassButtonVariant, string> = {
   glass: "liquid-glass liquid-glass-glare text-[var(--text-primary)]",
   subtle:
-    "liquid-glass liquid-glass-glare bg-[var(--glass-fill-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+    "liquid-glass liquid-glass-glare text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
   accent:
-    "liquid-glass liquid-glass-glare bg-sky-400/12 text-[var(--text-primary)]",
+    "liquid-glass liquid-glass-glare bg-sky-400/[0.07] text-[var(--text-primary)]",
   danger:
-    "liquid-glass liquid-glass-glare bg-rose-500/12 text-rose-500 dark:text-rose-300",
+    "liquid-glass liquid-glass-glare bg-rose-500/[0.08] text-rose-400",
   ghost:
     "liquid-glass-glare bg-transparent hover:bg-[var(--glass-fill-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent",
 };

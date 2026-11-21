@@ -275,10 +275,10 @@ export function GlassSelect({
                               transition={LIQUID_BUTTON_SPRING}
                               onClick={() => handleSelect(opt)}
                               className={cn(
-                                "glass-focus-ring flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition-colors cursor-pointer",
+                                "glass-focus-ring flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-colors cursor-pointer",
                                 isSelected
-                                  ? "liquid-glass text-[var(--text-primary)]"
-                                  : "text-[var(--text-secondary)] hover:bg-[var(--glass-fill-subtle)] hover:text-[var(--text-primary)]",
+                                  ? "border-[var(--border-matte-hover)] bg-white/[0.07] text-[var(--text-primary)]"
+                                  : "border-transparent text-[var(--text-secondary)] hover:bg-[var(--glass-fill-subtle)] hover:text-[var(--text-primary)]",
                                 opt.disabled && "pointer-events-none opacity-40"
                               )}
                             >

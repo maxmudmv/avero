@@ -14,7 +14,8 @@ export interface GlassBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const BADGE_CLASSES: Record<GlassBadgeVariant, string> = {
-  glass: "liquid-glass text-[var(--text-primary)]",
+  glass:
+    "bg-[var(--glass-fill-subtle)] border border-[var(--border-matte)] text-[var(--text-primary)]",
   matte:
     "bg-[var(--surface-matte)] border border-[var(--border-matte)] text-[var(--text-secondary)]",
   accent:

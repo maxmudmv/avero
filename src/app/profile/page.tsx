@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { LogIn, Send } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import { ProfileView } from "@/components/app/profile-view";
-import { GlassCard } from "@/design-system";
+import { useTelegramMiniApp } from "@/components/app/telegram-webapp-provider";
+import { GlassButton, GlassCard, useDesignSystem } from "@/design-system";
 import {
   apiClient,
   type FollowRequestItem,
@@ -13,7 +15,10 @@ import {
 } from "@/lib/api-client";
 
 export default function ProfilePage() {
-  const { auth, posts } = useAppState();
+  const { auth, posts, loginWithTelegramNow } = useAppState();
+  const { isTma } = useTelegramMiniApp();
+  const { toast } = useDesignSystem();
+  const [tgLoading, setTgLoading] = useState(false);
   const [dashboard, setDashboard] = useState<{
     profile: PublicProfileResponse;
     activity: OwnerActivityResponse;
@@ -58,17 +63,49 @@ export default function ProfilePage() {
     return (
       <AppShell title="Profil">
         <div className="space-y-4">
-          <GlassCard padding="md" className="flex items-center justify-between gap-3">
+          <GlassCard padding="md" className="space-y-3">
             <p className="text-[13.5px] text-[var(--text-secondary)]">
-              Shaxsiy profil, 3 kunlik faollik va avatarlarni ochish uchun kiring.
+              Shaxsiy profil, 3 kunlik faollik va 30 ta avatarni ochish uchun hisobingizga kiring.
             </p>
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a
-              href="/api/v1/auth/google/start"
-              className="liquid-glass glass-focus-ring inline-flex h-9 shrink-0 items-center rounded-2xl px-4 text-[13px] font-medium text-[var(--text-primary)]"
-            >
-              <span className="relative z-10">Google bilan kirish</span>
-            </a>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {isTma ? (
+                <GlassButton
+                  size="sm"
+                  variant="glass"
+                  loading={tgLoading}
+                  onClick={async () => {
+                    setTgLoading(true);
+                    try {
+                      const res = await loginWithTelegramNow();
+                      if (res.ok) {
+                        toast({
+                          title: "Telegram orqali tizimga kirdingiz",
+                          variant: "success",
+                        });
+                      } else {
+                        toast({
+                          title: res.error ?? "Kirishda xatolik",
+                          variant: "error",
+                        });
+                      }
+                    } finally {
+                      setTgLoading(false);
+                    }
+                  }}
+                >
+                  <Send className="h-3.5 w-3.5 text-sky-400" />
+                  Telegram orqali kirish
+                </GlassButton>
+              ) : null}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+              <a
+                href="/api/v1/auth/google/start"
+                className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-medium text-[var(--text-primary)]"
+              >
+                <LogIn className="relative z-10 h-3.5 w-3.5" />
+                <span className="relative z-10">Google bilan kirish</span>
+              </a>
+            </div>
           </GlassCard>
 
           <ProfileView profile={guestProfile} isOwner={false} />

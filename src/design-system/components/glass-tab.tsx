@@ -174,7 +174,7 @@ export function GlassTab({
         }
       }}
       className={cn(
-        "glass-focus-ring liquid-glass-glare relative flex-1 select-none rounded-xl px-4 py-2 text-[13.5px] font-medium transition-colors duration-150 cursor-pointer",
+        "glass-focus-ring liquid-glass-glare relative flex-1 select-none whitespace-nowrap rounded-xl px-2.5 py-2 text-[12.5px] font-medium transition-colors duration-150 sm:px-4 sm:text-[13.5px] cursor-pointer",
         isActive
           ? "text-[var(--text-primary)]"
           : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
@@ -187,7 +187,7 @@ export function GlassTab({
           layoutId={`lg-tab-pill-${ctx.layoutId}`}
           transition={LIQUID_TAB_SPRING}
           aria-hidden="true"
-          className="liquid-glass absolute inset-0 rounded-xl"
+          className="absolute inset-0 rounded-xl border border-[var(--border-matte-hover)] bg-white/[0.08] backdrop-blur-md"
         />
       ) : null}
       <span className="relative z-10 inline-flex items-center justify-center gap-1.5">

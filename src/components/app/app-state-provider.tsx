@@ -239,6 +239,8 @@ interface AppStateContextValue {
   auth: AuthMeData | null;
   authLoading: boolean;
   refreshAuth: () => Promise<void>;
+  loginWithTelegramNow: () => Promise<{ ok: boolean; error?: string }>;
+  logoutNow: () => Promise<void>;
   posts: ServerPost[];
   feedLoading: boolean;
   feedUsingServer: boolean;
@@ -334,6 +336,40 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     void refreshAuth();
   }, [isTma, initData, pendingLinkToken, refreshAuth]);
+
+  const loginWithTelegramNow = useCallback(async (): Promise<{
+    ok: boolean;
+    error?: string;
+  }> => {
+    if (!initData) {
+      return {
+        ok: false,
+        error: "Telegram Mini App orqali ochilganda avtomatik kirish ishlaydi",
+      };
+    }
+    try {
+      const res = await apiClient.loginWithTelegram(initData);
+      if (res.ok) {
+        setTmaSessionToken(res.data.sessionToken);
+        await refreshAuth();
+        return { ok: true };
+      }
+      return { ok: false, error: res.error.message };
+    } catch {
+      return { ok: false, error: "Server bilan bog‘lanishda xatolik" };
+    }
+  }, [initData, refreshAuth]);
+
+  const logoutNow = useCallback(async () => {
+    try {
+      await apiClient.logout();
+    } catch {
+      // ignore network error on logout
+    } finally {
+      setTmaSessionToken(null);
+      setAuth(null);
+    }
+  }, []);
 
   const confirmPendingTelegramLink = useCallback(async (): Promise<{
     ok: boolean;
@@ -624,6 +660,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       auth,
       authLoading,
       refreshAuth,
+      loginWithTelegramNow,
+      logoutNow,
       posts,
       feedLoading,
       feedUsingServer,
@@ -647,6 +685,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       auth,
       authLoading,
       refreshAuth,
+      loginWithTelegramNow,
+      logoutNow,
       posts,
       feedLoading,
       feedUsingServer,

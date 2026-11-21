@@ -198,14 +198,14 @@ export class LiquidGlassPhysicsEngine {
     this.reducedMotion = mql.matches;
 
     if (this.reducedMotion) {
-      this.applyAngles(132, 224);
+      this.applyAngles(132, 224, 0);
     }
 
     const onMotionChange = (e: MediaQueryListEvent) => {
       this.reducedMotion = e.matches;
       if (this.reducedMotion) {
         this.stopRaf();
-        this.applyAngles(132, 224);
+        this.applyAngles(132, 224, 0);
       } else if (!document.hidden) {
         this.scheduleRaf();
       }
@@ -309,16 +309,58 @@ export class LiquidGlassPhysicsEngine {
         0.12
       );
 
-      this.applyAngles(this.currentAngle, this.currentAngleAlt);
+      this.applyAngles(
+        this.currentAngle,
+        this.currentAngleAlt,
+        this.state.timeSeconds
+      );
     }
 
     this.scheduleRaf();
   };
 
-  private applyAngles(angle: number, angleAlt: number): void {
+  private applyAngles(angle: number, angleAlt: number, t = 0): void {
     const root = this.targetElement ?? document.documentElement;
     root.style.setProperty("--lg-angle", `${angle.toFixed(2)}deg`);
     root.style.setProperty("--lg-angle-alt", `${angleAlt.toFixed(2)}deg`);
+
+    // Organic multi-harmonic perimeter caustic pockets (non-spinning Lissajous drift + gyro/scroll bias)
+    const tiltBiasX = this.state.hasGyro
+      ? Math.max(-18, Math.min(18, this.state.gyroGamma * 0.45))
+      : this.state.pointerX * 14;
+    const tiltBiasY = this.state.hasGyro
+      ? Math.max(-18, Math.min(18, (this.state.gyroBeta - 45) * 0.35))
+      : this.state.pointerY * 14;
+    const scrollPhase = this.state.scrollY * 0.0022;
+
+    // Spot 1: White + Electric Cyan caustic (sweeps corners & edges asymmetrically)
+    const s1x =
+      50 + 52 * Math.sin(t * 0.53 + scrollPhase) + 12 * Math.cos(t * 1.17) + tiltBiasX;
+    const s1y =
+      50 + 58 * Math.cos(t * 0.37 - 0.55) + 14 * Math.sin(t * 0.89) + tiltBiasY;
+
+    // Spot 2: Iridescent Gold + Violet/Magenta caustic (independent counter-harmonic ratio)
+    const s2x =
+      50 + 54 * Math.cos(t * 0.41 + 1.85 - scrollPhase * 0.7) + 10 * Math.sin(t * 0.97) - tiltBiasX * 0.8;
+    const s2y =
+      50 + 56 * Math.sin(t * 0.67 + 0.42) + 12 * Math.cos(t * 0.29) - tiltBiasY * 0.8;
+
+    // Spot 3: Secondary Silver + Turquoise micro-glint (slow figure-8 weave)
+    const s3x =
+      50 + 50 * Math.sin(t * 0.29 + 3.14) + 16 * Math.cos(t * 0.73 + 0.9);
+    const s3y =
+      50 + 54 * Math.cos(t * 0.61 + 1.15) - 10 * Math.sin(t * 0.43);
+
+    // Subtle organic breathing intensity
+    const pulse = 0.88 + 0.12 * Math.sin(t * 0.83) * Math.cos(t * 0.31);
+
+    root.style.setProperty("--lg-spot1-x", `${s1x.toFixed(1)}%`);
+    root.style.setProperty("--lg-spot1-y", `${s1y.toFixed(1)}%`);
+    root.style.setProperty("--lg-spot2-x", `${s2x.toFixed(1)}%`);
+    root.style.setProperty("--lg-spot2-y", `${s2y.toFixed(1)}%`);
+    root.style.setProperty("--lg-spot3-x", `${s3x.toFixed(1)}%`);
+    root.style.setProperty("--lg-spot3-y", `${s3y.toFixed(1)}%`);
+    root.style.setProperty("--lg-pulse", pulse.toFixed(3));
 
     for (const listener of this.listeners) {
       listener({ angle, angleAlt });

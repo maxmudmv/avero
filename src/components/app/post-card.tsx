@@ -531,64 +531,74 @@ export const PostCard = React.memo(function PostCard({
               </div>
             ) : null}
 
-            {/* 5 Post Metrics: Like, Comments, Views, Repost, Bookmarks */}
-            <div className="mt-3.5 flex flex-wrap items-center justify-between gap-1 pt-1">
-              <div className="flex items-center gap-1 sm:gap-1.5">
-                <GlassButton
-                  size="sm"
-                  variant={post.likedByMe ? "danger" : "ghost"}
+            {/* 5 Post Metrics: Like, Comments, Repost, Bookmarks, Views (borderless, fill-only icons) */}
+            <div className="mt-3.5 flex items-center justify-between gap-2 pt-1">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <button
+                  type="button"
                   aria-label="Yoqtirish"
                   aria-pressed={post.likedByMe}
                   onClick={() => {
                     triggerHapticImpact("light");
                     void toggleReaction(post.id, "like");
                   }}
-                  className={cn("h-8 px-2", post.likedByMe && "text-rose-400")}
+                  className={cn(
+                    "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
+                    post.likedByMe
+                      ? "text-rose-500"
+                      : "hover:text-[var(--text-primary)]"
+                  )}
                 >
                   <Heart
-                    className={cn("h-4 w-4", post.likedByMe && "fill-current")}
+                    className={cn(
+                      "h-[18px] w-[18px] transition-transform duration-150",
+                      post.likedByMe && "scale-105 fill-current"
+                    )}
                   />
-                  <span className="font-mono text-[11.5px] tabular-nums">
+                  <span className="font-mono text-[12px] tabular-nums">
                     {post.likesCount}
                   </span>
-                </GlassButton>
+                </button>
 
-                <GlassButton
-                  size="sm"
-                  variant="ghost"
+                <button
+                  type="button"
                   aria-label="Izohlar"
                   onClick={() => void openComments()}
-                  className="h-8 px-2"
+                  className="glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 hover:text-[var(--text-primary)] active:scale-90 cursor-pointer"
                 >
-                  <MessageCircle className="h-4 w-4" />
-                  <span className="font-mono text-[11.5px] tabular-nums">
+                  <MessageCircle className="h-[18px] w-[18px]" />
+                  <span className="font-mono text-[12px] tabular-nums">
                     {post.commentsCount}
                   </span>
-                </GlassButton>
+                </button>
 
-                <GlassButton
-                  size="sm"
-                  variant={post.repostedByMe ? "accent" : "ghost"}
+                <button
+                  type="button"
                   aria-label="Repost"
                   aria-pressed={post.repostedByMe}
                   onClick={() => {
                     triggerHapticImpact("light");
                     setRepostOpen(true);
                   }}
-                  className={cn("h-8 px-2", post.repostedByMe && "text-sky-400")}
+                  className={cn(
+                    "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
+                    post.repostedByMe
+                      ? "text-emerald-400"
+                      : "hover:text-[var(--text-primary)]"
+                  )}
                 >
-                  <Repeat2 className="h-4 w-4" />
-                  <span className="font-mono text-[11.5px] tabular-nums">
+                  <Repeat2 className="h-[18px] w-[18px]" />
+                  <span className="font-mono text-[12px] tabular-nums">
                     {post.repostsCount}
                   </span>
-                </GlassButton>
+                </button>
 
-                <GlassButton
-                  size="sm"
-                  variant={post.bookmarkedByMe ? "accent" : "ghost"}
+                <button
+                  type="button"
                   aria-label="Saqlashlar"
                   aria-pressed={post.bookmarkedByMe}
                   onClick={() => {
+                    triggerHapticImpact("light");
                     void toggleReaction(post.id, "bookmark");
                     toast({
                       title: post.bookmarkedByMe
@@ -598,25 +608,27 @@ export const PostCard = React.memo(function PostCard({
                     });
                   }}
                   className={cn(
-                    "h-8 px-2",
-                    post.bookmarkedByMe && "text-sky-400"
+                    "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
+                    post.bookmarkedByMe
+                      ? "text-sky-400"
+                      : "hover:text-[var(--text-primary)]"
                   )}
                 >
                   <Bookmark
                     className={cn(
-                      "h-4 w-4",
-                      post.bookmarkedByMe && "fill-current"
+                      "h-[18px] w-[18px] transition-transform duration-150",
+                      post.bookmarkedByMe && "scale-105 fill-current"
                     )}
                   />
-                  <span className="font-mono text-[11.5px] tabular-nums">
+                  <span className="font-mono text-[12px] tabular-nums">
                     {post.bookmarksCount}
                   </span>
-                </GlassButton>
+                </button>
               </div>
 
               <span
                 aria-label={`${localViews} marta ko‘rildi`}
-                className="inline-flex items-center gap-1 px-2 font-mono text-[11.5px] tabular-nums text-[var(--text-muted)]"
+                className="inline-flex shrink-0 items-center gap-1 font-mono text-[11.5px] tabular-nums text-[var(--text-muted)]"
               >
                 <Eye className="h-3.5 w-3.5" />
                 {localViews}

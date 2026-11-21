@@ -47,7 +47,6 @@ import {
   AVATAR_CATALOG,
   type AvatarCategory,
 } from "@/lib/avatars/catalog";
-import { getPostStyleClasses, getPostTypeLabel } from "@/lib/posts/styles";
 import { useAppState } from "./app-state-provider";
 import { PostCard } from "./post-card";
 
@@ -580,44 +579,29 @@ export function ProfileView({
           </GlassCard>
         ) : (
           <div className="grid grid-cols-3 gap-2">
-            {profile.posts.map((post) => {
-              const style = getPostStyleClasses(post.styleConfig);
-              return (
-                <button
-                  key={post.id}
-                  type="button"
-                  onClick={() => setSelectedPost(post)}
-                  className={cn(
-                    "glass-focus-ring oled-matte-card group relative flex aspect-square flex-col justify-between overflow-hidden rounded-2xl p-2.5 text-left transition-transform hover:scale-[1.01] cursor-pointer",
-                    style.containerClass
-                  )}
-                >
-                  <span className="inline-block w-fit rounded-full bg-[var(--glass-fill)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-secondary)]">
-                    {getPostTypeLabel(post.postType)}
+            {profile.posts.map((post) => (
+              <button
+                key={post.id}
+                type="button"
+                onClick={() => setSelectedPost(post)}
+                className="glass-focus-ring oled-matte-card group relative flex aspect-square flex-col justify-between overflow-hidden rounded-2xl p-2.5 text-left transition-transform hover:scale-[1.01] cursor-pointer"
+              >
+                <p className="line-clamp-5 text-[11.5px] leading-snug text-[var(--text-primary)] sm:text-[12.5px]">
+                  {post.body}
+                </p>
+
+                <div className="flex items-center justify-between font-mono text-[10px] text-[var(--text-muted)]">
+                  <span className="inline-flex items-center gap-0.5">
+                    <Heart className="h-2.5 w-2.5" />
+                    {post.likesCount}
                   </span>
-
-                  <p
-                    className={cn(
-                      "line-clamp-4 text-[11.5px] leading-snug sm:text-[12.5px]",
-                      style.textClass
-                    )}
-                  >
-                    {post.body}
-                  </p>
-
-                  <div className="flex items-center justify-between font-mono text-[10px] text-[var(--text-muted)]">
-                    <span className="inline-flex items-center gap-0.5">
-                      <Heart className="h-2.5 w-2.5" />
-                      {post.likesCount}
-                    </span>
-                    <span className="inline-flex items-center gap-0.5">
-                      <Eye className="h-2.5 w-2.5" />
-                      {post.viewsCount}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+                  <span className="inline-flex items-center gap-0.5">
+                    <Eye className="h-2.5 w-2.5" />
+                    {post.viewsCount}
+                  </span>
+                </div>
+              </button>
+            ))}
           </div>
         )}
       </section>

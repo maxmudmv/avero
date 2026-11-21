@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { Feather } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
@@ -12,19 +11,8 @@ import {
   GlassCard,
   GlassTab,
   GlassTabs,
-  LIQUID_BUTTON_SPRING,
-  LIQUID_BUTTON_TAP,
-  LIQUID_TAB_SPRING,
   cn,
-  triggerHapticSelection,
-  useDesignSystem,
 } from "@/design-system";
-import { POST_TYPES, type PostTypeId } from "@/lib/posts/styles";
-
-const FILTER_CHIPS: Array<{ id: "Bugun" | PostTypeId; label: string }> = [
-  { id: "Bugun", label: "Bugun" },
-  ...POST_TYPES.map((t) => ({ id: t.id, label: t.shortLabel })),
-];
 
 const TRENDING_WINDOWS = [
   { id: "24h" as const, label: "24 soat" },
@@ -34,14 +22,10 @@ const TRENDING_WINDOWS = [
 
 export default function FeedPage() {
   const router = useRouter();
-  const { reducedMotion } = useDesignSystem();
   const { auth, posts, feedLoading, loadFeed } = useAppState();
 
   const [feedTab, setFeedTab] = useState<"for_you" | "following" | "trending">(
     "for_you"
-  );
-  const [activeFilter, setActiveFilter] = useState<"Bugun" | PostTypeId>(
-    "Bugun"
   );
   const [trendingWindow, setTrendingWindow] = useState<"24h" | "7d" | "30d">(
     "7d"
@@ -50,15 +34,11 @@ export default function FeedPage() {
   useEffect(() => {
     void loadFeed({
       tab: feedTab,
-      postType: activeFilter === "Bugun" ? undefined : activeFilter,
       window: trendingWindow,
     });
-  }, [feedTab, activeFilter, trendingWindow, loadFeed]);
+  }, [feedTab, trendingWindow, loadFeed]);
 
-  const displayedPosts = useMemo(() => {
-    if (activeFilter === "Bugun") return posts;
-    return posts.filter((p) => p.postType === activeFilter);
-  }, [posts, activeFilter]);
+  const displayedPosts = posts;
 
   return (
     <AppShell
@@ -75,7 +55,7 @@ export default function FeedPage() {
       }
     >
       {/* 3 Main Feed Directions */}
-      <div className="mb-3">
+      <div className="mb-4">
         <GlassTabs
           value={feedTab}
           onValueChange={(v) =>
@@ -88,49 +68,6 @@ export default function FeedPage() {
           <GlassTab value="following">Kuzatilayotganlar</GlassTab>
           <GlassTab value="trending">Mashhurlar</GlassTab>
         </GlassTabs>
-      </div>
-
-      {/* Single-Row Horizontal Filters — initial active: Bugun */}
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <div
-          role="tablist"
-          aria-label="Post turi filtrlari"
-          className="flex flex-nowrap items-center gap-2 overflow-x-auto no-scrollbar pb-1"
-        >
-          {FILTER_CHIPS.map((chip) => {
-            const isActive = activeFilter === chip.id;
-            return (
-              <motion.button
-                key={chip.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                whileTap={reducedMotion ? undefined : LIQUID_BUTTON_TAP}
-                transition={LIQUID_BUTTON_SPRING}
-                onClick={() => {
-                  triggerHapticSelection();
-                  setActiveFilter(chip.id);
-                }}
-                className={cn(
-                  "glass-focus-ring relative shrink-0 select-none rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors cursor-pointer",
-                  isActive
-                    ? "text-[var(--text-primary)]"
-                    : "border border-[var(--border-matte)] bg-[var(--surface-matte)]/60 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                )}
-              >
-                {isActive ? (
-                  <motion.span
-                    layoutId="avero-feed-filter-pill"
-                    transition={LIQUID_TAB_SPRING}
-                    aria-hidden="true"
-                    className="absolute inset-0 rounded-full border border-[var(--border-matte-hover)] bg-white/[0.09] backdrop-blur-md"
-                  />
-                ) : null}
-                <span className="relative z-10">{chip.label}</span>
-              </motion.button>
-            );
-          })}
-        </div>
       </div>
 
       {/* Trending Time Window Selector */}

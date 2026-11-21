@@ -34,6 +34,8 @@ export function GlassSheet({
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     setMounted(true);
@@ -47,13 +49,18 @@ export function GlassSheet({
     document.body.style.overflow = "hidden";
 
     const timer = window.setTimeout(() => {
-      sheetRef.current?.focus();
+      if (
+        sheetRef.current &&
+        !sheetRef.current.contains(document.activeElement)
+      ) {
+        sheetRef.current.focus();
+      }
     }, 10);
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -64,7 +71,7 @@ export function GlassSheet({
       document.body.style.overflow = prevOverflow;
       previousFocusRef.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!mounted) return null;
 

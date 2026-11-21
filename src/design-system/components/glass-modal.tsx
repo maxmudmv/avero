@@ -43,6 +43,8 @@ export function GlassModal({
   const descId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     setMounted(true);
@@ -56,13 +58,18 @@ export function GlassModal({
     document.body.style.overflow = "hidden";
 
     const focusTimer = window.setTimeout(() => {
-      dialogRef.current?.focus();
+      if (
+        dialogRef.current &&
+        !dialogRef.current.contains(document.activeElement)
+      ) {
+        dialogRef.current.focus();
+      }
     }, 10);
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -73,7 +80,7 @@ export function GlassModal({
       document.body.style.overflow = prevOverflow;
       previousFocusRef.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!mounted) return null;
 

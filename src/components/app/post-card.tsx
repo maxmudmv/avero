@@ -38,10 +38,7 @@ import {
   type ServerPost,
 } from "@/lib/api-client";
 import { COMMENT_REPORT_REASONS } from "@/lib/validation/social";
-import {
-  POST_TYPES,
-  type PostTypeId,
-} from "@/lib/posts/styles";
+import { type PostTypeId } from "@/lib/posts/styles";
 import { useAppState } from "./app-state-provider";
 
 function formatRelativeTime(iso: string): string {
@@ -493,12 +490,7 @@ export const PostCard = React.memo(function PostCard({
           </div>
 
           {/* Full-Width Pure-Text Body aligned flush with Avatar left edge */}
-          <p
-            className={cn(
-              "mt-3 whitespace-pre-wrap break-words text-[15px] leading-[1.68] text-[var(--text-primary)]",
-              post.postType === "poem" && "italic"
-            )}
-          >
+          <p className="mt-3 whitespace-pre-wrap break-words text-[15px] leading-[1.68] text-[var(--text-primary)]">
             {renderTextWithMentions(post.body)}
           </p>
 
@@ -922,19 +914,13 @@ export const PostCard = React.memo(function PostCard({
       >
         <form onSubmit={handleSaveEdit} className="space-y-4">
           <GlassSelect
-            label="Post turi"
-            value={editType}
-            onValueChange={(v) => setEditType(v as PostTypeId)}
-            options={POST_TYPES.map((t) => ({ value: t.id, label: t.label }))}
-          />
-          <GlassSelect
             label="Izohlar tartibi"
             value={editCommentPolicy}
             onValueChange={(v) => setEditCommentPolicy(v as CommentPolicy)}
             options={COMMENT_POLICY_OPTIONS}
           />
           <GlassTextarea
-            label="Matn"
+            label="Post matni"
             value={editBody}
             onChange={(e) => setEditBody(e.target.value)}
             rows={5}

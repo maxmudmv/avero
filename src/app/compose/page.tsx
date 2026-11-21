@@ -22,7 +22,6 @@ import {
   type ServerDraft,
 } from "@/lib/api-client";
 import {
-  POST_TYPES,
   type PostStyleTokens,
   type PostTypeId,
 } from "@/lib/posts/styles";
@@ -358,47 +357,25 @@ export default function ComposePage() {
               </div>
             </div>
 
-            {/* Post Type & Comment Policy Selects */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <GlassSelect
-                label="Post turi"
-                sheetTitle="Post turini tanlang"
-                value={postType}
-                onValueChange={(val) => {
-                  const nextType = val as PostTypeId;
-                  setPostType(nextType);
-                  triggerAutoSave({
-                    postType: nextType,
-                    body,
-                    styleConfig: SIMPLE_STYLE_CONFIG,
-                    hashtags,
-                  });
-                }}
-                options={POST_TYPES.map((t) => ({
-                  value: t.id,
-                  label: t.label,
-                }))}
-              />
-
-              <GlassSelect
-                label="Izohlar tartibi"
-                sheetTitle="Kimlar izoh yoza oladi?"
-                value={commentPolicy}
-                onValueChange={(val) =>
-                  setCommentPolicy(val as CommentPolicy)
-                }
-                options={[
-                  { value: "everyone", label: "Hamma yoza oladi" },
-                  { value: "followers", label: "Faqat obunachilar" },
-                  { value: "closed", label: "Izohlar yopilgan" },
-                ]}
-              />
-            </div>
+            {/* Comment Policy Select */}
+            <GlassSelect
+              label="Izohlar tartibi"
+              sheetTitle="Kimlar izoh yoza oladi?"
+              value={commentPolicy}
+              onValueChange={(val) =>
+                setCommentPolicy(val as CommentPolicy)
+              }
+              options={[
+                { value: "everyone", label: "Hamma yoza oladi" },
+                { value: "followers", label: "Faqat obunachilar" },
+                { value: "closed", label: "Izohlar yopilgan" },
+              ]}
+            />
 
             {/* Textarea with Configurable Limit (1000+) */}
             <GlassTextarea
-              label="Matn"
-              placeholder="Fikringiz, she’ringiz yoki hikoyangizni yozing..."
+              label="Post matni"
+              placeholder="Fikringizni yozing..."
               maxLength={maxPostLength}
               rows={6}
               value={body}

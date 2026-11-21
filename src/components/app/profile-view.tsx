@@ -26,6 +26,7 @@ import {
   GlassInput,
   GlassModal,
   GlassSelect,
+  GlassSheet,
   GlassTab,
   GlassTabs,
   GlassTextarea,
@@ -35,6 +36,7 @@ import {
 import {
   apiClient,
   type BlockLevel,
+  type FollowConnectionItem,
   type FollowRequestItem,
   type OwnerActivityResponse,
   type PublicProfileResponse,
@@ -101,6 +103,30 @@ export function ProfileView({
       : "dm_only"
   );
   const [savingBlock, setSavingBlock] = useState(false);
+
+  // Followers / Following sheet state
+  const [connectionsOpen, setConnectionsOpen] = useState(false);
+  const [connectionsTab, setConnectionsTab] = useState<
+    "followers" | "following"
+  >("followers");
+  const [connectionsLoading, setConnectionsLoading] = useState(false);
+  const [followersList, setFollowersList] = useState<FollowConnectionItem[]>([]);
+  const [followingList, setFollowingList] = useState<FollowConnectionItem[]>([]);
+
+  const openConnectionsSheet = async (tab: "followers" | "following") => {
+    setConnectionsTab(tab);
+    setConnectionsOpen(true);
+    setConnectionsLoading(true);
+    try {
+      const res = await apiClient.getProfileConnections(profile.username);
+      if (res.ok) {
+        setFollowersList(res.data.followers);
+        setFollowingList(res.data.following);
+      }
+    } finally {
+      setConnectionsLoading(false);
+    }
+  };
 
   useEffect(() => {
     setUsername(profile.username);
@@ -420,7 +446,7 @@ export function ProfileView({
           </div>
         ) : null}
 
-        {/* Stats Row */}
+        {/* Stats Row (Followers & Following are clickable) */}
         <div className="mt-5 flex flex-wrap items-center gap-6 border-t border-[var(--border-matte)] pt-4 text-[13.5px]">
           <div>
             <span className="font-semibold text-[var(--text-primary)]">
@@ -428,18 +454,30 @@ export function ProfileView({
             </span>{" "}
             <span className="text-[var(--text-muted)]">{t.profile.posts}</span>
           </div>
-          <div>
+          <button
+            type="button"
+            onClick={() => void openConnectionsSheet("followers")}
+            className="glass-focus-ring rounded-lg text-left transition-opacity hover:opacity-80 cursor-pointer"
+          >
             <span className="font-semibold text-[var(--text-primary)]">
               {followersCount}
             </span>{" "}
-            <span className="text-[var(--text-muted)]">Followers</span>
-          </div>
-          <div>
+            <span className="text-[var(--text-muted)] underline-offset-4 hover:underline">
+              {t.profile.followers}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => void openConnectionsSheet("following")}
+            className="glass-focus-ring rounded-lg text-left transition-opacity hover:opacity-80 cursor-pointer"
+          >
             <span className="font-semibold text-[var(--text-primary)]">
               {profile.followingCount}
             </span>{" "}
-            <span className="text-[var(--text-muted)]">Following</span>
-          </div>
+            <span className="text-[var(--text-muted)] underline-offset-4 hover:underline">
+              {t.profile.following}
+            </span>
+          </button>
         </div>
       </GlassCard>
 
@@ -784,6 +822,87 @@ export function ProfileView({
           </form>
         </GlassModal>
       ) : null}
+
+      {/* Followers & Following Sheet (Works on own profile and any other user's profile) */}
+      <GlassSheet
+        open={connectionsOpen}
+        onClose={() => setConnectionsOpen(false)}
+        title={`@${profile.username}`}
+      >
+        <div className="space-y-3">
+          <GlassTabs
+            value={connectionsTab}
+            onValueChange={(v) =>
+              setConnectionsTab(v as "followers" | "following")
+            }
+            ariaLabel="Followers and Following"
+            fullWidth
+          >
+            <GlassTab value="followers">
+              {t.profile.followers} ({followersList.length || followersCount})
+            </GlassTab>
+            <GlassTab value="following">
+              {t.profile.following} (
+              {followingList.length || profile.followingCount})
+            </GlassTab>
+          </GlassTabs>
+
+          {connectionsLoading ? (
+            <div className="divide-y divide-[var(--border-matte)]">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 py-3">
+                  <div className="h-9 w-9 animate-pulse rounded-full bg-white/[0.06]" />
+                  <div className="space-y-1.5">
+                    <div className="h-3.5 w-28 animate-pulse rounded bg-white/[0.06]" />
+                    <div className="h-3 w-20 animate-pulse rounded bg-white/[0.04]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (connectionsTab === "followers"
+              ? followersList
+              : followingList
+            ).length === 0 ? (
+            <p className="py-8 text-center text-[13.5px] text-[var(--text-muted)]">
+              Hozircha ro‘yxat bo‘sh.
+            </p>
+          ) : (
+            <div className="divide-y divide-[var(--border-matte)]">
+              {(connectionsTab === "followers"
+                ? followersList
+                : followingList
+              ).map((item) => (
+                <Link
+                  key={item.userId}
+                  href={`/u/${encodeURIComponent(item.username)}`}
+                  onClick={() => setConnectionsOpen(false)}
+                  className="flex items-center justify-between gap-3 py-3 transition-colors hover:bg-[var(--glass-fill-subtle)]"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <GlassAvatar
+                      name={item.displayName}
+                      seed={item.username}
+                      avatarId={item.avatarId}
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-[14px] font-semibold text-[var(--text-primary)]">
+                          {item.displayName}
+                        </span>
+                        {item.verified ? <VerifiedMark size={13} /> : null}
+                      </div>
+                      <div className="truncate text-[12px] text-[var(--text-muted)]">
+                        @{item.username}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </GlassSheet>
 
       {/* Granular Block Level Modal */}
       {!isOwner && auth?.user ? (

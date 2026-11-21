@@ -602,3 +602,84 @@ export async function respondToFollowRequest(params: {
     }
   );
 }
+
+export interface FollowConnectionItem {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatarId: string;
+  bio: string;
+  verified: boolean;
+  followedAt: string;
+}
+
+export async function listProfileConnections(params: {
+  username: string;
+  viewer?: { userId: string; role: UserRole } | null;
+}): Promise<{
+  followers: FollowConnectionItem[];
+  following: FollowConnectionItem[];
+} | null> {
+  const normalized = params.username.trim().toLowerCase().replace(/^@/, "");
+  const viewer = params.viewer ?? null;
+
+  return withDbContext(
+    { userId: viewer?.userId ?? null, role: viewer?.role ?? "anonymous" },
+    async (tx) => {
+      const [target] = await tx
+        .select({ userId: profiles.userId })
+        .from(profiles)
+        .where(eq(profiles.username, normalized))
+        .limit(1);
+
+      if (!target) {
+        return null;
+      }
+
+      const followerRows = await tx
+        .select({
+          userId: profiles.userId,
+          username: profiles.username,
+          displayName: profiles.displayName,
+          avatarId: profiles.avatarId,
+          bio: profiles.bio,
+          verified: sql<boolean>`public.is_user_verified(${profiles.userId})`,
+          followedAt: follows.createdAt,
+        })
+        .from(follows)
+        .innerJoin(profiles, eq(follows.followerId, profiles.userId))
+        .where(eq(follows.followingId, target.userId))
+        .orderBy(desc(follows.createdAt))
+        .limit(200);
+
+      const followingRows = await tx
+        .select({
+          userId: profiles.userId,
+          username: profiles.username,
+          displayName: profiles.displayName,
+          avatarId: profiles.avatarId,
+          bio: profiles.bio,
+          verified: sql<boolean>`public.is_user_verified(${profiles.userId})`,
+          followedAt: follows.createdAt,
+        })
+        .from(follows)
+        .innerJoin(profiles, eq(follows.followingId, profiles.userId))
+        .where(eq(follows.followerId, target.userId))
+        .orderBy(desc(follows.createdAt))
+        .limit(200);
+
+      return {
+        followers: followerRows.map((r) => ({
+          ...r,
+          verified: Boolean(r.verified),
+          followedAt: r.followedAt.toISOString(),
+        })),
+        following: followingRows.map((r) => ({
+          ...r,
+          verified: Boolean(r.verified),
+          followedAt: r.followedAt.toISOString(),
+        })),
+      };
+    }
+  );
+}

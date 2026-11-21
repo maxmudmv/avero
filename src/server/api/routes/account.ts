@@ -19,6 +19,7 @@ import {
   getOwnProfileDashboard,
   getPublicProfileByUsername,
   listIncomingFollowRequests,
+  listProfileConnections,
   ProfileServiceError,
   respondToFollowRequest,
   suggestAvailableUsernames,
@@ -77,6 +78,32 @@ accountRoutes.get("/users/:username", async (c) => {
   return c.json({
     ok: true,
     data: { profile },
+    meta: { requestId: c.get("requestId") },
+  });
+});
+
+accountRoutes.get("/users/:username/connections", async (c) => {
+  const username = c.req.param("username");
+  const actor = c.get("actor");
+  const connections = await listProfileConnections({
+    username,
+    viewer: actor ? { userId: actor.userId, role: actor.role } : null,
+  });
+
+  if (!connections) {
+    return c.json(
+      {
+        ok: false,
+        error: { code: "PROFILE_NOT_FOUND", message: "Profil topilmadi" },
+        meta: { requestId: c.get("requestId") },
+      },
+      404
+    );
+  }
+
+  return c.json({
+    ok: true,
+    data: connections,
     meta: { requestId: c.get("requestId") },
   });
 });

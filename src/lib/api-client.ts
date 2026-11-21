@@ -319,6 +319,16 @@ export interface FollowRequestItem {
   createdAt: string;
 }
 
+export interface FollowConnectionItem {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatarId: string;
+  bio: string;
+  verified: boolean;
+  followedAt: string;
+}
+
 export interface PostLimitInfo {
   currentMaxLength: number;
   baseLimit: number;
@@ -531,6 +541,12 @@ export const apiClient = {
     apiFetch<{ profile: PublicProfileResponse }>(
       `/api/v1/users/${encodeURIComponent(username)}`
     ),
+
+  getProfileConnections: (username: string) =>
+    apiFetch<{
+      followers: FollowConnectionItem[];
+      following: FollowConnectionItem[];
+    }>(`/api/v1/users/${encodeURIComponent(username)}/connections`),
 
   getFollowRequests: () =>
     apiFetch<{ requests: FollowRequestItem[] }>("/api/v1/account/follow-requests"),

@@ -46,12 +46,28 @@ export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 let cachedServerEnv: ServerEnv | null = null;
 
+function resolveDefaultAppUrl(): string {
+  const vercelHost =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  if (vercelHost) {
+    return vercelHost.startsWith("http") ? vercelHost : `https://${vercelHost}`;
+  }
+  return "http://localhost:3000";
+}
+
 export function getServerEnv(): ServerEnv {
   if (cachedServerEnv) {
     return cachedServerEnv;
   }
 
-  const parsed = serverEnvSchema.safeParse(process.env);
+  const fallbackOrigin = resolveDefaultAppUrl();
+  const normalizedEnv = {
+    ...process.env,
+    APP_URL: process.env.APP_URL || fallbackOrigin,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || fallbackOrigin,
+  };
+
+  const parsed = serverEnvSchema.safeParse(normalizedEnv);
   if (!parsed.success) {
     const formatted = parsed.error.issues
       .map((issue) => `${issue.path.join(".")}: ${issue.message}`)

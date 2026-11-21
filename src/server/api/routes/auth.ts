@@ -63,12 +63,33 @@ import type { AppEnv } from "../types";
 
 export const authRoutes = new Hono<AppEnv>();
 
+function resolveRequestOrigin(c: {
+  req: { url: string; header: (name: string) => string | undefined };
+}): string {
+  const forwardedHost = c.req.header("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || c.req.header("host")?.trim();
+  const forwardedProto = c.req
+    .header("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim();
+  if (host && !host.startsWith("localhost") && !host.startsWith("127.0.0.1")) {
+    const proto = forwardedProto || "https";
+    return `${proto}://${host}`;
+  }
+  const env = getServerEnv();
+  if (env.APP_URL && !env.APP_URL.includes("localhost")) {
+    return env.APP_URL.replace(/\/$/, "");
+  }
+  return new URL(c.req.url).origin;
+}
+
 // 1. Google OAuth 2.0 Web Login (with PKCE)
 authRoutes.get(
   "/auth/google/start",
   rateLimitMiddleware(RATE_LIMIT_RULES.AUTH_FLOW),
   (c) => {
     const env = getServerEnv();
+    const requestOrigin = resolveRequestOrigin(c);
     const linkToken = c.req.query("linkToken");
     const mode = linkToken ? "link" : "login";
 
@@ -89,7 +110,7 @@ authRoutes.get(
       if (err instanceof GoogleOAuthError) {
         const accept = c.req.header("accept") ?? "";
         if (accept.includes("text/html")) {
-          const fallbackUrl = new URL(env.APP_URL);
+          const fallbackUrl = new URL(requestOrigin);
           fallbackUrl.searchParams.set("auth_error", err.code.toLowerCase());
           return c.redirect(fallbackUrl.toString(), 302);
         }
@@ -112,6 +133,7 @@ authRoutes.get(
   rateLimitMiddleware(RATE_LIMIT_RULES.AUTH_FLOW),
   async (c) => {
     const env = getServerEnv();
+    const requestOrigin = resolveRequestOrigin(c);
     const code = c.req.query("code");
     const state = c.req.query("state");
     const oauthError = c.req.query("error");
@@ -124,7 +146,7 @@ authRoutes.get(
       accept.includes("application/json") && !accept.includes("text/html");
 
     const redirectWithError = (code: string) => {
-      const target = new URL(env.APP_URL);
+      const target = new URL(requestOrigin);
       target.searchParams.set("auth_error", code.toLowerCase());
       return c.redirect(target.toString(), 302);
     };
@@ -180,7 +202,7 @@ authRoutes.get(
         });
 
         if (!wantsJson) {
-          const linkTarget = new URL(env.APP_URL);
+          const linkTarget = new URL(requestOrigin);
           linkTarget.pathname = "/settings";
           linkTarget.searchParams.set("linked", "google");
           return c.redirect(linkTarget.toString(), 302);
@@ -218,7 +240,7 @@ authRoutes.get(
       );
 
       if (!wantsJson) {
-        const successTarget = new URL(env.APP_URL);
+        const successTarget = new URL(requestOrigin);
         successTarget.pathname = "/";
         successTarget.searchParams.set("auth", "success");
         return c.redirect(successTarget.toString(), 302);

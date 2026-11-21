@@ -49,10 +49,11 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
   const pathname = usePathname();
   const router = useRouter();
   const { reducedMotion, toast } = useDesignSystem();
-  const { isTma, pendingLinkToken } = useTelegramMiniApp();
+  const { isTma, pendingLinkToken, webApp } = useTelegramMiniApp();
   const {
     auth,
     authLoading,
+    refreshAuth,
     loginWithTelegramNow,
     logoutNow,
     unreadCount,
@@ -71,27 +72,52 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
     setMounted(true);
   }, []);
 
-  // Show a friendly toast when redirected from an unconfigured/failed OAuth flow
+  // Show a friendly toast when redirected from OAuth login/error
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
+    const authStatus = url.searchParams.get("auth");
     const authError = url.searchParams.get("auth_error");
-    if (!authError) return;
-    if (authError === "google_not_configured") {
+    if (!authStatus && !authError) return;
+
+    if (authStatus === "success") {
+      void refreshAuth();
+      toast({
+        title: "Google hisobingiz bilan tizimga kirdingiz",
+        variant: "success",
+      });
+    } else if (authError === "google_not_configured") {
       toast({
         title: "Google orqali kirish hali ulanmagan",
         description: "Hozircha Telegram orqali kirishingiz mumkin.",
         variant: "warning",
       });
-    } else {
+    } else if (authError === "oauth_denied") {
+      toast({
+        title: "Google orqali kirish bekor qilindi",
+        variant: "warning",
+      });
+    } else if (authError) {
       toast({
         title: "Kirishda xatolik yuz berdi",
         variant: "error",
       });
     }
+
+    url.searchParams.delete("auth");
     url.searchParams.delete("auth_error");
     window.history.replaceState({}, "", url.pathname + url.search + url.hash);
-  }, [toast]);
+  }, [toast, refreshAuth]);
+
+  const handleGoogleSignIn = () => {
+    const startUrl = `${window.location.origin}/api/v1/auth/google/start`;
+    // Inside Telegram Mini App, open Google OAuth in the system browser so the native Google account chooser works
+    if (isTma && webApp?.openLink) {
+      webApp.openLink(startUrl);
+      return;
+    }
+    window.location.href = startUrl;
+  };
 
   const publicEnv = getPublicEnv();
   const telegramBotUsername =
@@ -361,15 +387,15 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
             </a>
           )}
 
-          {/* Full-page navigation required for Google OAuth 302 redirect */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a
-            href="/api/v1/auth/google/start"
-            className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full px-6 text-[15px] font-medium text-[var(--text-primary)]"
+          <GlassButton
+            variant="glass"
+            size="lg"
+            onClick={handleGoogleSignIn}
+            className="w-full"
           >
-            <LogIn className="relative z-10 h-4 w-4" />
-            <span className="relative z-10">Google bilan kirish</span>
-          </a>
+            <LogIn className="h-4 w-4" />
+            Google bilan kirish
+          </GlassButton>
 
           <p className="pt-1 text-center text-[12px] leading-relaxed text-[var(--text-muted)]">
             Kirish orqali siz Avero xavfsizlik va hamjamiyat qoidalariga rozilik bildirasiz.
@@ -537,14 +563,15 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                                 <span className="relative z-10">Telegram</span>
                               </a>
                             )}
-                            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                            <a
-                              href="/api/v1/auth/google/start"
-                              className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-[var(--text-primary)]"
+                            <GlassButton
+                              size="sm"
+                              variant="glass"
+                              onClick={handleGoogleSignIn}
+                              className="w-full"
                             >
-                              <LogIn className="relative z-10 h-3.5 w-3.5" />
-                              <span className="relative z-10">Google</span>
-                            </a>
+                              <LogIn className="h-3.5 w-3.5" />
+                              Google
+                            </GlassButton>
                           </div>
                         </div>
                       )}

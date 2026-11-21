@@ -119,7 +119,20 @@ authRoutes.get(
 
     deleteCookie(c, GOOGLE_OAUTH_COOKIE_NAME, { path: "/" });
 
+    const accept = c.req.header("accept") ?? "";
+    const wantsJson =
+      accept.includes("application/json") && !accept.includes("text/html");
+
+    const redirectWithError = (code: string) => {
+      const target = new URL(env.APP_URL);
+      target.searchParams.set("auth_error", code.toLowerCase());
+      return c.redirect(target.toString(), 302);
+    };
+
     if (oauthError) {
+      if (!wantsJson) {
+        return redirectWithError("oauth_denied");
+      }
       return c.json(
         {
           ok: false,
@@ -134,6 +147,9 @@ authRoutes.get(
     }
 
     if (!code) {
+      if (!wantsJson) {
+        return redirectWithError("invalid_callback");
+      }
       return c.json(
         {
           ok: false,
@@ -163,6 +179,13 @@ authRoutes.get(
           requestId: c.get("requestId"),
         });
 
+        if (!wantsJson) {
+          const linkTarget = new URL(env.APP_URL);
+          linkTarget.pathname = "/settings";
+          linkTarget.searchParams.set("linked", "google");
+          return c.redirect(linkTarget.toString(), 302);
+        }
+
         return c.json({
           ok: true,
           data: {
@@ -190,8 +213,16 @@ authRoutes.get(
           result.sessionToken,
           result.expiresAt,
           env.NODE_ENV === "production"
-        )
+        ),
+        { append: true }
       );
+
+      if (!wantsJson) {
+        const successTarget = new URL(env.APP_URL);
+        successTarget.pathname = "/";
+        successTarget.searchParams.set("auth", "success");
+        return c.redirect(successTarget.toString(), 302);
+      }
 
       return c.json({
         ok: true,
@@ -204,6 +235,9 @@ authRoutes.get(
       });
     } catch (err) {
       if (err instanceof AccountLinkingError) {
+        if (!wantsJson) {
+          return redirectWithError(err.code);
+        }
         return c.json(
           {
             ok: false,
@@ -214,6 +248,9 @@ authRoutes.get(
         );
       }
       if (err instanceof GoogleOAuthError) {
+        if (!wantsJson) {
+          return redirectWithError(err.code);
+        }
         return c.json(
           {
             ok: false,
@@ -224,6 +261,9 @@ authRoutes.get(
         );
       }
       if (err instanceof AccountAccessError) {
+        if (!wantsJson) {
+          return redirectWithError(err.code);
+        }
         return c.json(
           {
             ok: false,

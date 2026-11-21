@@ -16,9 +16,18 @@ import {
 
 export default function ProfilePage() {
   const { auth, posts, loginWithTelegramNow } = useAppState();
-  const { isTma } = useTelegramMiniApp();
+  const { isTma, webApp } = useTelegramMiniApp();
   const { toast } = useDesignSystem();
   const [tgLoading, setTgLoading] = useState(false);
+
+  const handleGoogleSignIn = () => {
+    const startUrl = `${window.location.origin}/api/v1/auth/google/start`;
+    if (isTma && webApp?.openLink) {
+      webApp.openLink(startUrl);
+      return;
+    }
+    window.location.href = startUrl;
+  };
   const [dashboard, setDashboard] = useState<{
     profile: PublicProfileResponse;
     activity: OwnerActivityResponse;
@@ -97,14 +106,14 @@ export default function ProfilePage() {
                   Telegram orqali kirish
                 </GlassButton>
               ) : null}
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-              <a
-                href="/api/v1/auth/google/start"
-                className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-medium text-[var(--text-primary)]"
+              <GlassButton
+                size="sm"
+                variant="glass"
+                onClick={handleGoogleSignIn}
               >
-                <LogIn className="relative z-10 h-3.5 w-3.5" />
-                <span className="relative z-10">Google bilan kirish</span>
-              </a>
+                <LogIn className="h-3.5 w-3.5" />
+                Google bilan kirish
+              </GlassButton>
             </div>
           </GlassCard>
 

@@ -407,8 +407,10 @@ export default function ComposePage() {
                   size="md"
                 />
                 <div>
-                  <div className="text-[14.5px] font-semibold text-[var(--text-primary)]">
-                    {auth?.profile?.displayName || "Yangi post"}
+                  <div className="font-mono text-[14px] font-semibold text-[var(--text-primary)]">
+                    {auth?.profile?.username
+                      ? `@${auth.profile.username}`
+                      : "Yangi post"}
                   </div>
                   <div className="font-mono text-[11.5px] text-[var(--text-muted)]">
                     {draftStatus === "saving"

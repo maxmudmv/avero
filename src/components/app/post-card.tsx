@@ -462,10 +462,9 @@ export const PostCard = React.memo(function PostCard({
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Link
                     href={`/u/${encodeURIComponent(post.authorUsername)}`}
-                    style={{ fontFamily: "var(--font-display)" }}
-                    className="truncate text-[14.5px] font-semibold text-[var(--text-primary)] hover:underline"
+                    className="truncate font-mono text-[14px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] hover:underline"
                   >
-                    {post.authorDisplayName}
+                    @{post.authorUsername}
                   </Link>
                   {post.authorVerified ? (
                     <ShieldCheck
@@ -473,9 +472,6 @@ export const PostCard = React.memo(function PostCard({
                       className="h-3.5 w-3.5 shrink-0 text-sky-400"
                     />
                   ) : null}
-                  <span className="font-mono text-[12px] text-[var(--text-muted)]">
-                    @{post.authorUsername}
-                  </span>
                   <span className="text-[12px] text-[var(--text-muted)]">·</span>
                   <span className="text-[12px] text-[var(--text-muted)]">
                     {formatRelativeTime(post.createdAt)}
@@ -695,12 +691,9 @@ export const PostCard = React.memo(function PostCard({
                         ) : null}
                         <Link
                           href={`/u/${encodeURIComponent(comment.authorUsername)}`}
-                          className="truncate font-semibold text-[var(--text-primary)] hover:underline"
+                          className="truncate font-mono font-semibold text-[var(--text-primary)] hover:underline"
                         >
-                          {comment.authorDisplayName}{" "}
-                          <span className="font-mono font-normal text-[var(--text-muted)]">
-                            @{comment.authorUsername}
-                          </span>
+                          @{comment.authorUsername}
                         </Link>
                       </div>
                       <span className="shrink-0 text-[var(--text-muted)]">

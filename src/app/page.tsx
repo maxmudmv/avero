@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Feather } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import { PostCard } from "@/components/app/post-card";
@@ -43,30 +43,28 @@ export default function FeedPage() {
     <AppShell
       title="Avero"
       topAction={
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <GlassButton
-              size="icon"
-              variant="glass"
-              aria-label={t.menu.notifications}
-              onClick={() => router.push("/notifications")}
-              className="h-9 w-9"
-            >
-              <Bell className="h-4 w-4" />
-            </GlassButton>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label={t.menu.notifications}
+            onClick={() => router.push("/notifications")}
+            className="glass-focus-ring relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-primary)] transition-opacity hover:opacity-75 cursor-pointer"
+          >
+            <Bell className="h-[21px] w-[21px]" strokeWidth={1.9} />
             {unreadCount > 0 ? (
-              <span className="pointer-events-none absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--text-primary)] px-1 text-[10px] font-bold leading-none text-[var(--bg-canvas)]">
+              <span className="pointer-events-none absolute right-0.5 top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--text-primary)] px-1 text-[9.5px] font-bold leading-none text-[var(--bg-canvas)]">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             ) : null}
-          </div>
+          </button>
+
           <GlassButton
             size="sm"
             variant="glass"
             onClick={() => router.push("/compose")}
           >
-            <Feather className="h-3.5 w-3.5" />
-            {t.feed.writeBtn}
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.3} />
+            Post
           </GlassButton>
         </div>
       }

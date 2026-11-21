@@ -6,11 +6,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Bell,
   Bookmark,
   Eye,
   EyeOff,
-  Feather,
   HelpCircle,
   Home,
   KeyRound,
@@ -18,6 +16,7 @@ import {
   LogIn,
   LogOut,
   MessageSquare,
+  Plus,
   Search,
   Send,
   Settings,
@@ -373,16 +372,6 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
       icon: User,
     },
     {
-      href: "/notifications",
-      label: t.menu.notifications,
-      description:
-        unreadCount > 0
-          ? t.menu.notificationsNew(unreadCount)
-          : t.menu.notificationsAllRead,
-      icon: Bell,
-      badge: unreadCount > 0 ? unreadCount : undefined,
-    },
-    {
       href: "/bookmarks",
       label: t.menu.bookmarks,
       description: t.menu.bookmarksDesc,
@@ -390,9 +379,9 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
     },
     {
       href: "/compose",
-      label: t.nav.compose,
+      label: "+ Post",
       description: t.compose.newPost,
-      icon: Feather,
+      icon: Plus,
     },
     {
       href: "/settings",

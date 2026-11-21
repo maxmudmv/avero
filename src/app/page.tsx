@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Feather } from "lucide-react";
+import { Bell, Feather } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import { PostCard } from "@/components/app/post-card";
@@ -16,7 +16,7 @@ import {
 
 export default function FeedPage() {
   const router = useRouter();
-  const { auth, posts, feedLoading, loadFeed, t } = useAppState();
+  const { auth, posts, feedLoading, loadFeed, unreadCount, t } = useAppState();
 
   const [feedTab, setFeedTab] = useState<"for_you" | "following" | "trending">(
     "for_you"
@@ -43,14 +43,32 @@ export default function FeedPage() {
     <AppShell
       title="Avero"
       topAction={
-        <GlassButton
-          size="sm"
-          variant="glass"
-          onClick={() => router.push("/compose")}
-        >
-          <Feather className="h-3.5 w-3.5" />
-          {t.feed.writeBtn}
-        </GlassButton>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <GlassButton
+              size="icon"
+              variant="glass"
+              aria-label={t.menu.notifications}
+              onClick={() => router.push("/notifications")}
+              className="h-9 w-9"
+            >
+              <Bell className="h-4 w-4" />
+            </GlassButton>
+            {unreadCount > 0 ? (
+              <span className="pointer-events-none absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--text-primary)] px-1 text-[10px] font-bold leading-none text-[var(--bg-canvas)]">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            ) : null}
+          </div>
+          <GlassButton
+            size="sm"
+            variant="glass"
+            onClick={() => router.push("/compose")}
+          >
+            <Feather className="h-3.5 w-3.5" />
+            {t.feed.writeBtn}
+          </GlassButton>
+        </div>
       }
     >
       {/* 3 Main Feed Directions */}

@@ -939,7 +939,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                                 <Icon className="h-4 w-4" />
                               </span>
                               {item.badge ? (
-                                <span className="rounded-full bg-sky-400/20 px-2 py-0.5 font-mono text-[11px] font-semibold text-sky-400">
+                                <span className="rounded-full bg-[var(--text-primary)] px-2 py-0.5 text-[11px] font-bold text-[var(--bg-canvas)]">
                                   {item.badge}
                                 </span>
                               ) : null}
@@ -1005,10 +1005,10 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                   className="relative z-10 h-[18px] w-[18px]"
                 />
                 <span className="relative z-10 leading-none">{tab.label}</span>
-                {tab.id === "menu" && unreadCount > 0 ? (
+                {tab.id === "feed" && unreadCount > 0 ? (
                   <span
                     aria-hidden="true"
-                    className="absolute right-4 top-2 z-20 h-1.5 w-1.5 rounded-full bg-sky-400"
+                    className="absolute right-4 top-2 z-20 h-1.5 w-1.5 rounded-full bg-[var(--text-primary)]"
                   />
                 ) : null}
               </motion.button>

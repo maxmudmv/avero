@@ -9,8 +9,6 @@ import {
   Copy,
   Edit3,
   ExternalLink,
-  Eye,
-  Heart,
   Link2,
   Lock,
   MessageSquare,
@@ -41,7 +39,6 @@ import {
   type FollowRequestItem,
   type OwnerActivityResponse,
   type PublicProfileResponse,
-  type ServerPost,
 } from "@/lib/api-client";
 import {
   AVATAR_CATALOG,
@@ -68,7 +65,6 @@ export function ProfileView({
   const { toast } = useDesignSystem();
   const { auth, refreshAuth } = useAppState();
 
-  const [selectedPost, setSelectedPost] = useState<ServerPost | null>(null);
   const [editOpen, setEditOpen] = useState(false);
 
   // Edit Profile + Settings state
@@ -556,8 +552,8 @@ export function ProfileView({
         </GlassCard>
       ) : null}
 
-      {/* Instagram-style 3-Column Text Post Grid */}
-      <section aria-label="Postlar to‘ri">
+      {/* Full-size vertical posts feed (newest at top, older below) */}
+      <section aria-label="Postlar" className="space-y-3">
         {profile.contentBlocked ? (
           <GlassCard padding="lg" className="text-center space-y-1.5">
             <p className="text-[14.5px] font-medium text-[var(--text-primary)]">
@@ -570,47 +566,17 @@ export function ProfileView({
         ) : profile.posts.length === 0 ? (
           <GlassCard padding="lg" className="text-center">
             <p className="text-[14.5px] text-[var(--text-secondary)]">
-              Hali chop etilgan matnli postlar yo‘q.
+              Hali chop etilgan postlar yo‘q.
             </p>
           </GlassCard>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-3">
             {profile.posts.map((post) => (
-              <button
-                key={post.id}
-                type="button"
-                onClick={() => setSelectedPost(post)}
-                className="glass-focus-ring oled-matte-card group relative flex aspect-square flex-col justify-between overflow-hidden rounded-2xl p-2.5 text-left transition-transform hover:scale-[1.01] cursor-pointer"
-              >
-                <p className="line-clamp-5 text-[11.5px] leading-snug text-[var(--text-primary)] sm:text-[12.5px]">
-                  {post.body}
-                </p>
-
-                <div className="flex items-center justify-between font-mono text-[10px] text-[var(--text-muted)]">
-                  <span className="inline-flex items-center gap-0.5">
-                    <Heart className="h-2.5 w-2.5" />
-                    {post.likesCount}
-                  </span>
-                  <span className="inline-flex items-center gap-0.5">
-                    <Eye className="h-2.5 w-2.5" />
-                    {post.viewsCount}
-                  </span>
-                </div>
-              </button>
+              <PostCard key={post.id} post={post} />
             ))}
           </div>
         )}
       </section>
-
-      {/* Full Post Modal on Grid Cell Click */}
-      <GlassModal
-        open={Boolean(selectedPost)}
-        onClose={() => setSelectedPost(null)}
-        title={selectedPost ? `@${selectedPost.authorUsername}` : "Post"}
-        size="lg"
-      >
-        {selectedPost ? <PostCard post={selectedPost} /> : null}
-      </GlassModal>
 
       {/* Owner Profile Settings + 30-Avatar Picker Modal */}
       {isOwner ? (

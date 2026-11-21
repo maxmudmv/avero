@@ -442,7 +442,12 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
 
             <div className="flex items-center gap-2">
               {topAction}
-              {auth?.profile ? (
+              {authLoading ? (
+                <span
+                  aria-hidden="true"
+                  className="h-9 w-9 animate-pulse rounded-full bg-white/[0.06]"
+                />
+              ) : auth?.profile ? (
                 <Link
                   href="/profile"
                   aria-label="Profilga o‘tish"

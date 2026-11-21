@@ -68,7 +68,7 @@ describe("Posts Validation, Hashtags, Styles & Configurable Limits", () => {
       verifiedReferralsCount: 2,
       hasVerifiedEmail: true,
     });
-    expect(boosted.unlockedMaxLength).toBe(1700); // 1000 + 200 + 500
+    expect(boosted.unlockedMaxLength).toBe(1050); // 1000 + 2 * 25
 
     // Even if config lowers later, previously unlocked 2200 never drops
     const neverDecreases = computeUnlockedPostLength({

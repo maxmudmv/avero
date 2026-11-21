@@ -65,7 +65,7 @@ export default function FeedPage() {
           fullWidth
         >
           <GlassTab value="for_you">Siz uchun</GlassTab>
-          <GlassTab value="following">Kuzatilayotganlar</GlassTab>
+          <GlassTab value="following">Obunalar</GlassTab>
           <GlassTab value="trending">Mashhurlar</GlassTab>
         </GlassTabs>
       </div>
@@ -97,11 +97,20 @@ export default function FeedPage() {
       {/* Feed Stream */}
       <div className="space-y-3">
         {feedLoading && displayedPosts.length === 0 ? (
-          <GlassCard padding="lg" className="text-center">
-            <p className="text-[14px] text-[var(--text-muted)]">
-              Lenta yuklanmoqda...
-            </p>
-          </GlassCard>
+          <div className="space-y-3" aria-label="Lenta yuklanmoqda">
+            {[0, 1].map((idx) => (
+              <GlassCard key={idx} padding="md" className="space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-white/[0.06]" />
+                  <div className="h-3.5 w-28 animate-pulse rounded-lg bg-white/[0.06]" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3.5 w-full animate-pulse rounded-lg bg-white/[0.05]" />
+                  <div className="h-3.5 w-4/5 animate-pulse rounded-lg bg-white/[0.05]" />
+                </div>
+              </GlassCard>
+            ))}
+          </div>
         ) : displayedPosts.length === 0 ? (
           <GlassCard padding="lg" className="text-center">
             <p className="text-[15px] font-medium text-[var(--text-primary)]">

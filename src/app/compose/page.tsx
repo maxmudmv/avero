@@ -391,7 +391,7 @@ export default function ComposePage() {
               }}
               hint={
                 limitInfo?.nextMilestoneHint ??
-                "Dastlabki limit: 1000 belgi. Haqiqiy do‘stlarni taklif qilish orqali limitni oshirish mumkin."
+                "Dastlabki limit: 1000 belgi. Har bir taklif qilgan do‘stingiz uchun +25 belgi qo‘shiladi."
               }
             />
 

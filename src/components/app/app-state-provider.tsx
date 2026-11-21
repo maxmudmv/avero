@@ -112,111 +112,6 @@ function formatNotifTime(iso: string): string {
   return `${Math.floor(diffHrs / 24)} kun`;
 }
 
-const FALLBACK_DEMO_POSTS: ServerPost[] = [
-  {
-    id: "00000000-0000-4000-8000-000000000001",
-    authorId: "00000000-0000-4000-8000-000000000101",
-    authorUsername: "azizbek",
-    authorDisplayName: "Azizbek Karimov",
-    authorVerified: true,
-    postType: "thought",
-    body: "Matnga asoslangan ijtimoiy tarmoqning eng katta kuchi — shovqinsiz, toza fikr almashish. Rasm va video yo‘qligi har bir so‘zning qadrini oshiradi.",
-    styleConfig: { editorMode: "simple" },
-    hashtags: ["avero", "fikrlar"],
-    isEdited: false,
-    editedAt: null,
-    likesCount: 48,
-    commentsCount: 2,
-    viewsCount: 312,
-    repostsCount: 9,
-    bookmarksCount: 14,
-    likedByMe: false,
-    repostedByMe: false,
-    bookmarkedByMe: false,
-    followedByMe: false,
-    createdAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "00000000-0000-4000-8000-000000000002",
-    authorId: "00000000-0000-4000-8000-000000000102",
-    authorUsername: "madina_r",
-    authorDisplayName: "Madina Rustamova",
-    authorVerified: false,
-    postType: "poem",
-    body: "Sukut ichra tug‘ilar satrlar,\nOq qog‘oz emas — shaffof oyna bu.\nHar bir so‘zda yashar bir ma’no,\nKo‘ngil tubidan chiqqan sado bu.",
-    styleConfig: { editorMode: "simple" },
-    hashtags: ["sheriyat", "ijod"],
-    isEdited: false,
-    editedAt: null,
-    likesCount: 73,
-    commentsCount: 5,
-    viewsCount: 540,
-    repostsCount: 18,
-    bookmarksCount: 29,
-    likedByMe: false,
-    repostedByMe: false,
-    bookmarkedByMe: true,
-    followedByMe: false,
-    createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "00000000-0000-4000-8000-000000000003",
-    authorId: "00000000-0000-4000-8000-000000000103",
-    authorUsername: "sardor_dev",
-    authorDisplayName: "Sardor Alimov",
-    authorVerified: true,
-    postType: "quote",
-    body: "“Murakkablikni olib tashlaganingizda, haqiqiy mohiyat qoladi.” — Minimalist muhandislik tamoyili.",
-    styleConfig: { editorMode: "simple" },
-    hashtags: ["iqtibos", "texnologiya"],
-    isEdited: false,
-    editedAt: null,
-    likesCount: 91,
-    commentsCount: 7,
-    viewsCount: 820,
-    repostsCount: 24,
-    bookmarksCount: 41,
-    likedByMe: true,
-    repostedByMe: false,
-    bookmarkedByMe: false,
-    followedByMe: true,
-    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-  },
-];
-
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: "n_1",
-    type: "reply",
-    actorName: "Dilnoza",
-    actorUsername: "dilnoza_uz",
-    text: "Sizning fikringizga izoh qoldirdi",
-    timeLabel: "8 daq",
-    read: false,
-  },
-  {
-    id: "n_2",
-    type: "like",
-    actorName: "Sardor Alimov",
-    actorUsername: "sardor_dev",
-    text: "Sizning postingizni yoqtirdi",
-    timeLabel: "24 daq",
-    read: false,
-  },
-  {
-    id: "n_3",
-    type: "system",
-    actorName: "Avero Xavfsizlik",
-    actorUsername: "system",
-    text: "Akkauntingizda RLS va sessiya himoyasi faol.",
-    timeLabel: "2 soat",
-    read: true,
-  },
-];
-
 interface AppStateContextValue {
   auth: AuthMeData | null;
   authLoading: boolean;
@@ -267,12 +162,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const [auth, setAuth] = useState<AuthMeData | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [posts, setPosts] = useState<ServerPost[]>(FALLBACK_DEMO_POSTS);
-  const [feedLoading, setFeedLoading] = useState(false);
+  const [posts, setPosts] = useState<ServerPost[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
   const [feedUsingServer, setFeedUsingServer] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(
-    INITIAL_NOTIFICATIONS
-  );
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [linkingTelegram, setLinkingTelegram] = useState(false);
   const tmaAutoAuthAttemptedRef = useRef(false);
@@ -280,14 +173,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const refreshAuth = useCallback(async () => {
     setAuthLoading(true);
     try {
-      const res = await apiClient.getMe();
+      let res = await apiClient.getMe();
+      // Retry once on transient cold-start or network hiccup so page refresh never spuriously logs out
+      if (!res.ok && res.error.code !== "UNAUTHORIZED") {
+        await new Promise((r) => setTimeout(r, 350));
+        res = await apiClient.getMe();
+      }
       if (res.ok) {
         setAuth(res.data);
-      } else {
+      } else if (res.error.code === "UNAUTHORIZED") {
         setAuth(null);
       }
     } catch {
-      setAuth(null);
+      // Keep previous auth state on transient offline/network error
     } finally {
       setAuthLoading(false);
     }
@@ -392,23 +290,24 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }) => {
       setFeedLoading(true);
       try {
-        const res = await apiClient.getFeed({
+        let res = await apiClient.getFeed({
           tab: params.tab,
           postType: params.postType,
           window: params.window ?? "7d",
           limit: 30,
         });
+        if (!res.ok) {
+          await new Promise((r) => setTimeout(r, 300));
+          res = await apiClient.getFeed({
+            tab: params.tab,
+            postType: params.postType,
+            window: params.window ?? "7d",
+            limit: 30,
+          });
+        }
         if (res.ok) {
           setFeedUsingServer(true);
-          if (res.data.posts.length > 0 || params.tab === "following") {
-            setPosts(res.data.posts);
-          } else {
-            // If DB is empty on first boot, keep curated preview posts for discovery
-            const filteredFallback = params.postType
-              ? FALLBACK_DEMO_POSTS.filter((p) => p.postType === params.postType)
-              : FALLBACK_DEMO_POSTS;
-            setPosts(filteredFallback);
-          }
+          setPosts(res.data.posts);
         } else {
           setFeedUsingServer(false);
         }

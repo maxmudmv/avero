@@ -15,9 +15,9 @@ export interface PostLimitConfig {
  */
 export const POST_LIMIT_CONFIG: PostLimitConfig = {
   baseLimit: 1000,
-  emailVerifiedBonus: 200,
-  referralBonusPerFriend: 250,
-  maxReferralBonus: 2000,
+  emailVerifiedBonus: 0,
+  referralBonusPerFriend: 25,
+  maxReferralBonus: 2500,
   absoluteMaxLimit: 3500,
 };
 

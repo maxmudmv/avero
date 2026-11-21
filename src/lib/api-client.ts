@@ -379,6 +379,7 @@ async function apiFetch<T>(
     ...init,
     headers,
     credentials: "include",
+    cache: "no-store",
   });
 
   const json = (await res.json().catch(() => null)) as ApiResponse<T> | null;

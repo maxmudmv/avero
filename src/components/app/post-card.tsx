@@ -13,6 +13,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   Repeat2,
+  Send,
   ShieldCheck,
   Trash2,
   X,
@@ -613,16 +614,62 @@ export const PostCard = React.memo(function PostCard({
         </div>
       </GlassCard>
 
-      {/* Comments Sheet (Sorted by popularity, replies supported, NO edit) */}
+      {/* Comments Sheet: clean comments list on top + simple 1-line input bar pinned at bottom */}
       <GlassSheet
         open={commentsOpen}
         onClose={() => {
           setCommentsOpen(false);
           setReplyTo(null);
         }}
-        title={`@${post.authorUsername} postiga izohlar`}
+        title={`Izohlar (${post.commentsCount})`}
+        footer={
+          post.commentPolicy !== "closed" ? (
+            <form
+              onSubmit={handleAddComment}
+              className="flex w-full flex-col gap-2"
+            >
+              {replyTo ? (
+                <div className="flex items-center justify-between px-1 text-[12px] text-[var(--text-secondary)]">
+                  <span>@{replyTo.authorUsername} ga javob</span>
+                  <button
+                    type="button"
+                    aria-label="Javobni bekor qilish"
+                    onClick={() => setReplyTo(null)}
+                    className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : null}
+              <div className="flex w-full items-center gap-2">
+                <input
+                  type="text"
+                  placeholder={
+                    replyTo
+                      ? `@${replyTo.authorUsername} ga javob yozing...`
+                      : "Izoh yozing..."
+                  }
+                  maxLength={500}
+                  value={commentDraft}
+                  onChange={(e) => setCommentDraft(e.target.value)}
+                  className="h-10 flex-1 rounded-full border border-[var(--border-matte)] bg-[var(--surface-input)] px-4 text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--border-matte-hover)] focus:outline-none"
+                />
+                <GlassButton
+                  type="submit"
+                  size="icon"
+                  variant="glass"
+                  aria-label="Izoh yuborish"
+                  disabled={!commentDraft.trim()}
+                  className="h-10 w-10 shrink-0"
+                >
+                  <Send className="h-4 w-4" />
+                </GlassButton>
+              </div>
+            </form>
+          ) : undefined
+        }
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           {post.commentPolicy && post.commentPolicy !== "everyone" ? (
             <div className="flex items-center gap-2 rounded-2xl border border-[var(--border-matte)] bg-[var(--glass-fill-subtle)] px-3.5 py-2 text-[12px] text-[var(--text-secondary)]">
               <Lock className="h-3.5 w-3.5 shrink-0 text-amber-400" />
@@ -635,12 +682,12 @@ export const PostCard = React.memo(function PostCard({
           ) : null}
 
           {loadingComments ? (
-            <p className="py-4 text-center text-[13px] text-[var(--text-muted)]">
+            <p className="py-6 text-center text-[13px] text-[var(--text-muted)]">
               Izohlar yuklanmoqda...
             </p>
           ) : comments.length === 0 ? (
-            <p className="py-4 text-center text-[13.5px] text-[var(--text-muted)]">
-              Hali izohlar yo‘q. Birinchi bo‘lib fikr qoldiring.
+            <p className="py-6 text-center text-[13.5px] text-[var(--text-muted)]">
+              Hali izohlar yo‘q.
             </p>
           ) : (
             <div className="space-y-2.5">
@@ -684,16 +731,16 @@ export const PostCard = React.memo(function PostCard({
                       {renderTextWithMentions(comment.body)}
                     </p>
 
-                    <div className="mt-2.5 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
                         <button
                           type="button"
                           aria-label="Izohni yoqtirish"
                           onClick={() => void handleToggleCommentLike(comment.id)}
                           className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] transition-colors cursor-pointer",
+                            "inline-flex items-center gap-1 text-[11.5px] transition-colors cursor-pointer",
                             comment.likedByMe
-                              ? "text-rose-400"
+                              ? "text-rose-500"
                               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                           )}
                         >
@@ -714,7 +761,7 @@ export const PostCard = React.memo(function PostCard({
                             onClick={() => setReplyTo(comment)}
                             className="text-[11.5px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
                           >
-                            Javob berish
+                            Javob
                           </button>
                         ) : null}
                       </div>
@@ -754,42 +801,6 @@ export const PostCard = React.memo(function PostCard({
               })}
             </div>
           )}
-
-          {post.commentPolicy !== "closed" ? (
-            <form onSubmit={handleAddComment} className="space-y-3 pt-2">
-              {replyTo ? (
-                <div className="flex items-center justify-between rounded-xl border border-sky-500/25 bg-sky-500/10 px-3 py-1.5 text-[12px] text-[var(--text-secondary)]">
-                  <span>
-                    @{replyTo.authorUsername} izohiga javob yozilmoqda
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Javobni bekor qilish"
-                    onClick={() => setReplyTo(null)}
-                    className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ) : null}
-              <GlassTextarea
-                label={replyTo ? "Javob yozish" : "Izoh yozish"}
-                placeholder="Fikringizni yozing... (@username belgilash mumkin)"
-                maxLength={500}
-                value={commentDraft}
-                onChange={(e) => setCommentDraft(e.target.value)}
-              />
-              <div className="flex justify-end">
-                <GlassButton
-                  type="submit"
-                  variant="glass"
-                  disabled={!commentDraft.trim()}
-                >
-                  Izoh yuborish
-                </GlassButton>
-              </div>
-            </form>
-          ) : null}
         </div>
       </GlassSheet>
 

@@ -17,6 +17,10 @@ import type { AppEnv } from "./types";
 export function createApiApp(): Hono<AppEnv> {
   const app = new Hono<AppEnv>().basePath("/api/v1");
 
+  app.use("*", async (c, next) => {
+    await next();
+    c.header("Cache-Control", "private, no-store, no-cache, must-revalidate");
+  });
   app.use("*", requestContextMiddleware);
   app.use("*", csrfOriginGuardMiddleware);
   app.use("*", jsonOnlyGuardMiddleware);

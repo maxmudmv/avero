@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Ban, Bell, Check, Link2, LogOut, Scale, Send } from "lucide-react";
+import { Ban, Bell, Check, Link2, LogOut, Moon, Scale, Send, Sun } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import {
@@ -9,8 +9,6 @@ import {
   GlassButton,
   GlassCard,
   GlassSelect,
-  GlassTab,
-  GlassTabs,
   GlassTextarea,
   cn,
   useDesignSystem,
@@ -30,12 +28,6 @@ import {
   NOTIFICATION_TYPE_LABELS,
   type NotificationPreferences,
 } from "@/lib/validation/notifications";
-
-const LANGUAGE_OPTIONS = [
-  { value: "uz", label: "O‘zbekcha", description: "Lotin alifbosi" },
-  { value: "en", label: "English", description: "English (US)" },
-  { value: "ru", label: "Русский", description: "Русский язык" },
-];
 
 function SettingToggle({
   label,
@@ -84,8 +76,51 @@ function SettingToggle({
   );
 }
 
+function Segmented({
+  value,
+  onChange,
+  options,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  options: Array<{ value: string; label: React.ReactNode; title?: string }>;
+  ariaLabel: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className="inline-flex items-center gap-0.5 rounded-full border border-[var(--border-matte)] p-0.5"
+    >
+      {options.map((opt) => {
+        const active = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            title={opt.title}
+            aria-label={opt.title}
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "glass-focus-ring inline-flex h-7 min-w-9 items-center justify-center rounded-full px-2.5 text-[12px] font-semibold transition-colors cursor-pointer",
+              active
+                ? "bg-[var(--text-primary)] text-[var(--bg-canvas)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            )}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function SettingsPage() {
-  const { theme, setTheme, toast } = useDesignSystem();
+  const { theme, resolvedTheme, setTheme, toast } = useDesignSystem();
   const {
     auth,
     refreshAuth,
@@ -328,34 +363,44 @@ export default function SettingsPage() {
         padding="lg"
         className="divide-y divide-[var(--border-matte)] [&>section]:py-6 [&>section:first-child]:pt-0 [&>section:last-child]:pb-0"
       >
-        {/* 1. Til va Mavzu */}
-        <section className="space-y-4">
-          <h2 style={{ fontFamily: "var(--font-display)" }} className={sectionTitle}>
-            {t.settings.appearanceTitle}
-          </h2>
-
-          <GlassSelect
-            label={t.settings.languageLabel}
-            sheetTitle={t.settings.languageSheetTitle}
-            value={language}
-            onValueChange={handleLanguageChange}
-            options={LANGUAGE_OPTIONS}
-          />
-
-          <div className="space-y-1.5">
-            <span className="text-[13px] font-medium text-[var(--text-secondary)]">
+        {/* 1. Til va Mavzu — ixcham qatorlar */}
+        <section className="divide-y divide-[var(--border-matte)]">
+          <div className="flex items-center justify-between gap-3 py-2.5">
+            <span className="text-[14px] font-medium text-[var(--text-primary)]">
+              {t.settings.languageLabel}
+            </span>
+            <Segmented
+              ariaLabel={t.settings.languageLabel}
+              value={language}
+              onChange={handleLanguageChange}
+              options={[
+                { value: "uz", label: "UZ" },
+                { value: "en", label: "EN" },
+                { value: "ru", label: "RU" },
+              ]}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-3 py-2.5">
+            <span className="text-[14px] font-medium text-[var(--text-primary)]">
               {t.settings.themeLabel}
             </span>
-            <GlassTabs
-              value={theme}
-              onValueChange={(v) => setTheme(v as ThemeMode)}
+            <Segmented
               ariaLabel={t.settings.themeLabel}
-              fullWidth
-            >
-              <GlassTab value="system">{t.settings.themeSystem}</GlassTab>
-              <GlassTab value="dark">{t.settings.themeDark}</GlassTab>
-              <GlassTab value="light">{t.settings.themeLight}</GlassTab>
-            </GlassTabs>
+              value={theme === "system" ? resolvedTheme : theme}
+              onChange={(v) => setTheme(v as ThemeMode)}
+              options={[
+                {
+                  value: "light",
+                  label: <Sun className="h-4 w-4" />,
+                  title: t.settings.themeLight,
+                },
+                {
+                  value: "dark",
+                  label: <Moon className="h-4 w-4" />,
+                  title: t.settings.themeDark,
+                },
+              ]}
+            />
           </div>
         </section>
 

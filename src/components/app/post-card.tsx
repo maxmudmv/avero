@@ -693,7 +693,7 @@ export const PostCard = React.memo(function PostCard({
       >
         <div className="space-y-3">
           {post.commentPolicy && post.commentPolicy !== "everyone" ? (
-            <div className="flex items-center gap-2 rounded-2xl border border-[var(--border-matte)] bg-[var(--glass-fill-subtle)] px-3.5 py-2 text-[12px] text-[var(--text-secondary)]">
+            <div className="flex items-center gap-2 text-[12px] text-[var(--text-muted)]">
               <Lock className="h-3.5 w-3.5 shrink-0 text-amber-400" />
               <span>
                 {post.commentPolicy === "closed"
@@ -712,7 +712,7 @@ export const PostCard = React.memo(function PostCard({
               {t.post.noComments}
             </p>
           ) : (
-            <div className="space-y-2.5">
+            <div className="divide-y divide-[var(--border-matte)]">
               {comments.map((comment) => {
                 const canDeleteComment = Boolean(
                   auth?.user?.id &&
@@ -728,8 +728,9 @@ export const PostCard = React.memo(function PostCard({
                   <div
                     key={comment.id}
                     className={cn(
-                      "rounded-2xl border border-[var(--border-matte)] bg-[var(--surface-input)] p-3.5",
-                      comment.parentCommentId && "ml-5 border-sky-500/20"
+                      "py-3 first:pt-1 last:pb-1",
+                      comment.parentCommentId &&
+                        "ml-5 border-l border-[var(--border-matte)] pl-3"
                     )}
                   >
                     <div className="flex items-center justify-between gap-2 text-[12px]">

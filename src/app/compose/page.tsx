@@ -252,7 +252,7 @@ export default function ComposePage() {
               {savedDrafts.map((d) => (
                 <div
                   key={d.id}
-                  className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[var(--border-matte)] bg-[var(--surface-input)] px-3 py-1.5"
+                  className="flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--glass-fill-subtle)] px-3 py-1.5"
                 >
                   <button
                     type="button"

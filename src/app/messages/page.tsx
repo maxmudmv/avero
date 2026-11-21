@@ -215,9 +215,12 @@ function MessagesContent() {
           </p>
         </GlassCard>
       ) : (
-        <div className="grid gap-3 md:grid-cols-[230px_1fr]">
+        <GlassCard
+          padding="none"
+          className="grid overflow-hidden divide-y divide-[var(--border-matte)] md:grid-cols-[230px_1fr] md:divide-y-0 md:divide-x"
+        >
           {/* Conversations list */}
-          <GlassCard padding="sm" className="space-y-1.5">
+          <div className="divide-y divide-[var(--border-matte)]">
             {threads.map((thread) => {
               const isCurrent = thread.id === active?.id;
               return (
@@ -225,9 +228,9 @@ function MessagesContent() {
                   key={thread.id}
                   type="button"
                   onClick={() => setActiveId(thread.id)}
-                  className={`glass-focus-ring flex w-full items-center gap-2.5 rounded-2xl p-2.5 text-left transition-colors cursor-pointer ${
+                  className={`glass-focus-ring flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors cursor-pointer ${
                     isCurrent
-                      ? "liquid-glass text-[var(--text-primary)]"
+                      ? "bg-[var(--glass-fill-subtle)] text-[var(--text-primary)]"
                       : "text-[var(--text-secondary)] hover:bg-[var(--glass-fill-subtle)]"
                   }`}
                 >
@@ -253,11 +256,11 @@ function MessagesContent() {
                 </button>
               );
             })}
-          </GlassCard>
+          </div>
 
           {/* Thread view */}
           {active ? (
-            <GlassCard padding="md" className="flex min-h-[380px] flex-col">
+            <div className="flex min-h-[380px] flex-col p-4">
               <div className="flex items-center justify-between gap-2 border-b border-[var(--border-matte)] pb-3">
                 <div>
                   <div className="text-[15px] font-semibold text-[var(--text-primary)]">
@@ -313,7 +316,7 @@ function MessagesContent() {
               </div>
 
               {active.isIncomingRequest ? (
-                <div className="space-y-3 rounded-2xl border border-sky-500/25 bg-sky-500/10 p-3.5">
+                <div className="space-y-3 border-t border-[var(--border-matte)] pt-3">
                   <p className="text-[13px] text-[var(--text-secondary)]">
                     @{active.partner.username} sizga ilk bor xabar so‘rovi yubordi. Suhbatni davom ettirish uchun qabul qiling yoki rad eting.
                   </p>
@@ -339,7 +342,7 @@ function MessagesContent() {
                   </div>
                 </div>
               ) : active.status === "declined" ? (
-                <div className="flex items-center gap-2 rounded-2xl border border-[var(--border-matte)] p-3 text-[12.5px] text-[var(--text-muted)]">
+                <div className="flex items-center gap-2 border-t border-[var(--border-matte)] pt-3 text-[12.5px] text-[var(--text-muted)]">
                   <Lock className="h-3.5 w-3.5" />
                   Ushbu xabar so‘rovi rad etilgan.
                 </div>
@@ -365,9 +368,9 @@ function MessagesContent() {
                   </GlassButton>
                 </form>
               ) : null}
-            </GlassCard>
+            </div>
           ) : null}
-        </div>
+        </GlassCard>
       )}
     </AppShell>
   );

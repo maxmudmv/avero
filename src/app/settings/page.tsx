@@ -6,7 +6,6 @@ import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import {
   GlassAvatar,
-  GlassBadge,
   GlassButton,
   GlassCard,
   GlassSelect,
@@ -50,7 +49,7 @@ function SettingToggle({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--border-matte)] px-4 py-3">
+    <div className="flex items-center justify-between gap-4 py-3">
       <div className="min-w-0">
         <div className="text-[14px] font-medium text-[var(--text-primary)]">
           {label}
@@ -318,15 +317,20 @@ export default function SettingsPage() {
   const hasGoogle = auth?.identities.some((i) => i.provider === "google");
   const hasTelegram = auth?.identities.some((i) => i.provider === "telegram");
 
+  const sectionTitle =
+    "text-[15px] font-semibold text-[var(--text-primary)]";
+  const textLink =
+    "glass-focus-ring inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--text-primary)] underline-offset-4 hover:underline";
+
   return (
     <AppShell title={t.settings.pageTitle}>
-      <div className="space-y-4">
+      <GlassCard
+        padding="lg"
+        className="divide-y divide-[var(--border-matte)] [&>section]:py-6 [&>section:first-child]:pt-0 [&>section:last-child]:pb-0"
+      >
         {/* 1. Til va Mavzu */}
-        <GlassCard padding="md" className="space-y-4">
-          <h2
-            style={{ fontFamily: "var(--font-display)" }}
-            className="text-[16px] font-semibold text-[var(--text-primary)]"
-          >
+        <section className="space-y-4">
+          <h2 style={{ fontFamily: "var(--font-display)" }} className={sectionTitle}>
             {t.settings.appearanceTitle}
           </h2>
 
@@ -353,14 +357,11 @@ export default function SettingsPage() {
               <GlassTab value="light">{t.settings.themeLight}</GlassTab>
             </GlassTabs>
           </div>
-        </GlassCard>
+        </section>
 
-        {/* 2. Maxfiylik va Bildirishnomalar */}
-        <GlassCard padding="md" className="space-y-3.5">
-          <h2
-            style={{ fontFamily: "var(--font-display)" }}
-            className="text-[16px] font-semibold text-[var(--text-primary)]"
-          >
+        {/* 2. Maxfiylik */}
+        <section className="space-y-3">
+          <h2 style={{ fontFamily: "var(--font-display)" }} className={sectionTitle}>
             {t.settings.privacyTitle}
           </h2>
 
@@ -387,98 +388,103 @@ export default function SettingsPage() {
             ]}
           />
 
-          <SettingToggle
-            label={t.settings.showOnlineLabel}
-            description={t.settings.showOnlineDesc}
-            checked={showOnlineStatus}
-            onChange={setShowOnlineStatus}
-          />
-          <SettingToggle
-            label={t.settings.autoApproveLabel}
-            description={t.settings.autoApproveDesc}
-            checked={autoApproveFollows}
-            onChange={setAutoApproveFollows}
-          />
+          <div className="divide-y divide-[var(--border-matte)]">
+            <SettingToggle
+              label={t.settings.showOnlineLabel}
+              description={t.settings.showOnlineDesc}
+              checked={showOnlineStatus}
+              onChange={setShowOnlineStatus}
+            />
+            <SettingToggle
+              label={t.settings.autoApproveLabel}
+              description={t.settings.autoApproveDesc}
+              checked={autoApproveFollows}
+              onChange={setAutoApproveFollows}
+            />
+            <SettingToggle
+              label={t.settings.allowMentionsLabel}
+              description={t.settings.allowMentionsDesc}
+              checked={allowMentions}
+              onChange={setAllowMentions}
+            />
+          </div>
+        </section>
 
-          <SettingToggle
-            label={t.settings.allowMentionsLabel}
-            description={t.settings.allowMentionsDesc}
-            checked={allowMentions}
-            onChange={setAllowMentions}
-          />
-          <SettingToggle
-            label={t.settings.emailNotifLabel}
-            description={t.settings.emailNotifDesc}
-            checked={emailNotifications}
-            onChange={setEmailNotifications}
-          />
-          <SettingToggle
-            label={t.settings.telegramNotifLabel}
-            description={t.settings.telegramNotifDesc}
-            checked={telegramNotifications}
-            onChange={(next) => {
-              if (next && !telegramBotStarted) {
-                toast({
-                  title: t.settings.telegramNotifDesc,
-                  variant: "warning",
-                });
-                return;
-              }
-              setTelegramNotifications(next);
-            }}
-          />
+        {/* 3. Bildirishnomalar */}
+        <section className="space-y-3">
+          <h2
+            style={{ fontFamily: "var(--font-display)" }}
+            className={cn(sectionTitle, "flex items-center gap-1.5")}
+          >
+            <Bell className="h-4 w-4 text-[var(--text-muted)]" />
+            {t.settings.notifEventsTitle}
+          </h2>
 
-          {auth?.user && !telegramBotStarted ? (
-            <div className="space-y-2 rounded-2xl border border-sky-500/25 bg-sky-500/10 p-3.5 text-[12.5px]">
-              <p className="text-[var(--text-secondary)]">
-                Telegram bot orqali xabar olish uchun botni <code>/start</code>{" "}
-                bilan ishga tushiring va rozilik bering.
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                {process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ? (
-                  <a
-                    href={`https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}?start=avero`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="liquid-glass glass-focus-ring inline-flex h-8 items-center rounded-xl px-3 text-[12px] font-medium text-[var(--text-primary)]"
+          <div className="divide-y divide-[var(--border-matte)]">
+            <SettingToggle
+              label={t.settings.emailNotifLabel}
+              description={t.settings.emailNotifDesc}
+              checked={emailNotifications}
+              onChange={setEmailNotifications}
+            />
+            <SettingToggle
+              label={t.settings.telegramNotifLabel}
+              description={t.settings.telegramNotifDesc}
+              checked={telegramNotifications}
+              onChange={(next) => {
+                if (next && !telegramBotStarted) {
+                  toast({
+                    title: t.settings.telegramNotifDesc,
+                    variant: "warning",
+                  });
+                  return;
+                }
+                setTelegramNotifications(next);
+              }}
+            />
+            {auth?.user && !telegramBotStarted ? (
+              <div className="space-y-2.5 py-3 text-[12.5px]">
+                <p className="text-[var(--text-muted)]">
+                  Telegram bot orqali xabar olish uchun botni <code>/start</code>{" "}
+                  bilan ishga tushiring va rozilik bering.
+                </p>
+                <div className="flex flex-wrap items-center gap-4">
+                  {process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ? (
+                    <a
+                      href={`https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}?start=avero`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={textLink}
+                    >
+                      Botni ochish
+                    </a>
+                  ) : null}
+                  <GlassButton
+                    size="sm"
+                    variant="glass"
+                    loading={confirmingBot}
+                    onClick={() => void handleConfirmTelegramBotStart()}
                   >
-                    <span className="relative z-10">Botni /start qilish</span>
-                  </a>
-                ) : null}
-                <GlassButton
-                  size="sm"
-                  variant="glass"
-                  loading={confirmingBot}
-                  onClick={() => void handleConfirmTelegramBotStart()}
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  /start va rozilikni tasdiqlash
-                </GlassButton>
+                    <Send className="h-3.5 w-3.5" />
+                    /start va rozilikni tasdiqlash
+                  </GlassButton>
+                </div>
               </div>
-            </div>
-          ) : null}
-
-          <div className="space-y-2 border-t border-[var(--border-matte)] pt-3">
-            <div className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--text-primary)]">
-              <Bell className="h-3.5 w-3.5 text-sky-400" />
-              {t.settings.notifEventsTitle}
-            </div>
-            <div className="space-y-2">
-              {NOTIFICATION_TYPE_LABELS.map((item) => (
-                <SettingToggle
-                  key={item.key}
-                  label={item.label}
-                  description={item.description}
-                  checked={notifPrefs[item.key]}
-                  onChange={(next) =>
-                    setNotifPrefs((prev) => ({ ...prev, [item.key]: next }))
-                  }
-                />
-              ))}
-            </div>
+            ) : null}
+            {NOTIFICATION_TYPE_LABELS.map((item) => (
+              <SettingToggle
+                key={item.key}
+                label={item.label}
+                description={item.description}
+                checked={notifPrefs[item.key]}
+                onChange={(next) =>
+                  setNotifPrefs((prev) => ({ ...prev, [item.key]: next }))
+                }
+              />
+            ))}
           </div>
 
-          <div className="flex justify-end pt-1">
+          <div className="flex justify-end pt-2">
             <GlassButton
               variant="glass"
               loading={saving}
@@ -488,25 +494,22 @@ export default function SettingsPage() {
               {t.settings.saveSettings}
             </GlassButton>
           </div>
-        </GlassCard>
+        </section>
 
-        {/* 3. Akkaunt sozlamalari */}
-        <GlassCard padding="md" className="space-y-4">
+        {/* 4. Akkaunt */}
+        <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h2
-              style={{ fontFamily: "var(--font-display)" }}
-              className="text-[16px] font-semibold text-[var(--text-primary)]"
-            >
+            <h2 style={{ fontFamily: "var(--font-display)" }} className={sectionTitle}>
               {t.settings.accountTitle}
             </h2>
-            <GlassBadge variant={auth?.user ? "success" : "matte"}>
+            <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-muted)]">
               <Shield className="h-3 w-3" />
               {auth?.user ? t.settings.activeSession : t.settings.guest}
-            </GlassBadge>
+            </span>
           </div>
 
           {!auth?.user ? (
-            <div className="space-y-3 rounded-2xl border border-[var(--border-matte)] p-4">
+            <div className="space-y-3">
               <p className="text-[13.5px] text-[var(--text-secondary)]">
                 {t.settings.signInToManage}
               </p>
@@ -519,105 +522,117 @@ export default function SettingsPage() {
               </a>
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-2xl border border-[var(--border-matte)] px-4 py-3 text-[13.5px]">
-                <span>Google</span>
-                <GlassBadge variant={hasGoogle ? "success" : "matte"}>
-                  {hasGoogle ? t.settings.connected : t.settings.notConnected}
-                </GlassBadge>
-              </div>
-              <div className="flex items-center justify-between rounded-2xl border border-[var(--border-matte)] px-4 py-3 text-[13.5px]">
-                <span>Telegram</span>
-                <GlassBadge variant={hasTelegram ? "success" : "matte"}>
-                  {hasTelegram ? t.settings.connected : t.settings.notConnected}
-                </GlassBadge>
-              </div>
-
-              {!hasTelegram ? (
-                <div className="space-y-2.5 rounded-2xl border border-[var(--border-matte)] p-3.5">
-                  <label className="flex items-start gap-2.5 text-[12.5px] text-[var(--text-secondary)] cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={consentLink}
-                      onChange={(e) => setConsentLink(e.target.checked)}
-                      className="mt-0.5 accent-sky-400"
-                    />
-                    <span>
-                      Telegram akkauntimni joriy profilimga o‘z roziligim bilan
-                      bog‘lashga roziman.
-                    </span>
-                  </label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <GlassButton
-                      size="sm"
-                      variant="accent"
-                      onClick={() => void handleLinkTelegram()}
-                    >
-                      <Link2 className="h-3.5 w-3.5" />
-                      Telegram ulash
-                    </GlassButton>
-                    {telegramLinkDeepLink ? (
-                      <a
-                        href={telegramLinkDeepLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="liquid-glass glass-focus-ring inline-flex h-8 items-center rounded-xl px-3 text-[12px] font-medium text-[var(--text-primary)]"
-                      >
-                        <span className="relative z-10">
-                          Telegramda tasdiqlash
-                        </span>
-                      </a>
-                    ) : null}
-                  </div>
+            <>
+              <div className="divide-y divide-[var(--border-matte)] text-[13.5px]">
+                <div className="flex items-center justify-between py-3">
+                  <span className="text-[var(--text-primary)]">Google</span>
+                  <span
+                    className={cn(
+                      "text-[12.5px]",
+                      hasGoogle ? "text-emerald-400" : "text-[var(--text-muted)]"
+                    )}
+                  >
+                    {hasGoogle ? t.settings.connected : t.settings.notConnected}
+                  </span>
                 </div>
-              ) : null}
+                <div className="flex items-center justify-between py-3">
+                  <span className="text-[var(--text-primary)]">Telegram</span>
+                  <span
+                    className={cn(
+                      "text-[12.5px]",
+                      hasTelegram ? "text-emerald-400" : "text-[var(--text-muted)]"
+                    )}
+                  >
+                    {hasTelegram ? t.settings.connected : t.settings.notConnected}
+                  </span>
+                </div>
+                {!hasTelegram ? (
+                  <div className="space-y-3 py-3">
+                    <label className="flex items-start gap-2.5 text-[12.5px] text-[var(--text-secondary)] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={consentLink}
+                        onChange={(e) => setConsentLink(e.target.checked)}
+                        className="mt-0.5 accent-sky-400"
+                      />
+                      <span>
+                        Telegram akkauntimni joriy profilimga o‘z roziligim bilan
+                        bog‘lashga roziman.
+                      </span>
+                    </label>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <GlassButton
+                        size="sm"
+                        variant="glass"
+                        onClick={() => void handleLinkTelegram()}
+                      >
+                        <Link2 className="h-3.5 w-3.5" />
+                        Telegram ulash
+                      </GlassButton>
+                      {telegramLinkDeepLink ? (
+                        <a
+                          href={telegramLinkDeepLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={textLink}
+                        >
+                          Telegramda tasdiqlash
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
 
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-2">
                 <GlassButton
                   size="sm"
-                  variant="subtle"
+                  variant="glass"
                   onClick={() => void handleLogout(false)}
                 >
                   <LogOut className="h-3.5 w-3.5" />
-                  Chiqish
+                  {t.settings.logoutCurrent}
                 </GlassButton>
                 <GlassButton
                   size="sm"
-                  variant="danger"
+                  variant="glass"
+                  className="text-rose-400"
                   onClick={() => void handleLogout(true)}
                 >
-                  Barcha qurilmalardan chiqish
+                  {t.settings.logoutAll}
                 </GlassButton>
               </div>
-            </div>
+            </>
           )}
-        </GlassCard>
+        </section>
 
-        {/* 4. Cheklangan / Bloklangan foydalanuvchilar */}
+        {/* 5. Bloklangan foydalanuvchilar */}
         {auth?.user ? (
-          <GlassCard padding="md" className="space-y-3">
+          <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <h2
                 style={{ fontFamily: "var(--font-display)" }}
-                className="flex items-center gap-1.5 text-[16px] font-semibold text-[var(--text-primary)]"
+                className={cn(sectionTitle, "flex items-center gap-1.5")}
               >
-                <Ban className="h-4 w-4 text-rose-400" />
+                <Ban className="h-4 w-4 text-[var(--text-muted)]" />
                 Bloklangan foydalanuvchilar
               </h2>
-              <GlassBadge variant="matte">{blocks.length}</GlassBadge>
+              <span className="font-mono text-[12px] text-[var(--text-muted)]">
+                {blocks.length}
+              </span>
             </div>
             {blocks.length === 0 ? (
               <p className="text-[13px] text-[var(--text-muted)]">
                 Hozircha bloklangan foydalanuvchilar yo‘q.
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="divide-y divide-[var(--border-matte)]">
                 {blocks.map((b) => (
                   <div
                     key={b.blockedId}
-                    className="flex items-center justify-between gap-2 rounded-2xl border border-[var(--border-matte)] px-3.5 py-2.5"
+                    className="flex items-center justify-between gap-2 py-3"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       <GlassAvatar
                         name={b.displayName}
                         seed={b.username}
@@ -626,10 +641,9 @@ export default function SettingsPage() {
                       />
                       <div className="min-w-0">
                         <div className="truncate text-[13.5px] font-medium text-[var(--text-primary)]">
-                          {b.displayName}
+                          @{b.username}
                         </div>
-                        <div className="font-mono text-[11px] text-[var(--text-muted)]">
-                          @{b.username} ·{" "}
+                        <div className="text-[11.5px] text-[var(--text-muted)]">
                           {b.level === "dm_only"
                             ? "Faqat DM"
                             : b.level === "follow_only"
@@ -642,7 +656,7 @@ export default function SettingsPage() {
                     </div>
                     <GlassButton
                       size="sm"
-                      variant="subtle"
+                      variant="glass"
                       onClick={() => void handleUnblock(b.blockedId)}
                     >
                       Olib tashlash
@@ -651,33 +665,30 @@ export default function SettingsPage() {
                 ))}
               </div>
             )}
-          </GlassCard>
+          </section>
         ) : null}
 
-        {/* 5. Ogohlantirishlar va Apellyatsiya */}
+        {/* 6. Ogohlantirishlar va Apellyatsiya */}
         {auth?.user ? (
-          <GlassCard padding="md" className="space-y-3">
+          <section className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <h2
                 style={{ fontFamily: "var(--font-display)" }}
-                className="flex items-center gap-1.5 text-[16px] font-semibold text-[var(--text-primary)]"
+                className={cn(sectionTitle, "flex items-center gap-1.5")}
               >
-                <Scale className="h-4 w-4 text-amber-400" />
+                <Scale className="h-4 w-4 text-[var(--text-muted)]" />
                 Ogohlantirishlar va Apellyatsiya
               </h2>
-              <GlassBadge variant="matte">{warnings.length} ta</GlassBadge>
+              <span className="font-mono text-[12px] text-[var(--text-muted)]">
+                {warnings.length}
+              </span>
             </div>
 
             {warnings.length > 0 ? (
-              <div className="space-y-2">
+              <div className="divide-y divide-[var(--border-matte)]">
                 {warnings.map((w) => (
-                  <div
-                    key={w.id}
-                    className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3 text-[13px]"
-                  >
-                    <div className="font-medium text-[var(--text-primary)]">
-                      {w.reason}
-                    </div>
+                  <div key={w.id} className="py-3 text-[13px]">
+                    <div className="font-medium text-amber-400">{w.reason}</div>
                     <div className="mt-1 font-mono text-[11px] text-[var(--text-muted)]">
                       {new Date(w.createdAt).toLocaleString()}
                     </div>
@@ -686,7 +697,7 @@ export default function SettingsPage() {
               </div>
             ) : null}
 
-            <form onSubmit={handleSubmitAppeal} className="space-y-3 pt-1">
+            <form onSubmit={handleSubmitAppeal} className="space-y-3">
               <GlassSelect
                 label="Apellyatsiya turi"
                 value={appealActionType}
@@ -718,7 +729,7 @@ export default function SettingsPage() {
                 <GlassButton
                   type="submit"
                   size="sm"
-                  variant="subtle"
+                  variant="glass"
                   loading={submittingAppeal}
                   disabled={appealReason.trim().length < 10}
                 >
@@ -728,31 +739,27 @@ export default function SettingsPage() {
             </form>
 
             {appeals.length > 0 ? (
-              <div className="space-y-2 border-t border-[var(--border-matte)] pt-3">
+              <div className="divide-y divide-[var(--border-matte)] border-t border-[var(--border-matte)]">
                 {appeals.map((ap) => (
-                  <div
-                    key={ap.id}
-                    className="rounded-2xl border border-[var(--border-matte)] p-3 text-[12.5px]"
-                  >
+                  <div key={ap.id} className="py-3 text-[12.5px]">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[var(--text-muted)]">
                         {ap.actionType}
                       </span>
-                      <GlassBadge
-                        variant={
+                      <span
+                        className={cn(
+                          "text-[12px]",
                           ap.status === "approved"
-                            ? "success"
+                            ? "text-emerald-400"
                             : ap.status === "rejected"
-                              ? "matte"
-                              : "accent"
-                        }
+                              ? "text-[var(--text-muted)]"
+                              : "text-[var(--text-secondary)]"
+                        )}
                       >
                         {ap.status}
-                      </GlassBadge>
+                      </span>
                     </div>
-                    <p className="mt-1 text-[var(--text-secondary)]">
-                      {ap.reason}
-                    </p>
+                    <p className="mt-1 text-[var(--text-secondary)]">{ap.reason}</p>
                     {ap.reviewReason ? (
                       <p className="mt-1 text-[11.5px] text-[var(--text-muted)]">
                         Qaror: {ap.reviewReason}
@@ -762,9 +769,9 @@ export default function SettingsPage() {
                 ))}
               </div>
             ) : null}
-          </GlassCard>
+          </section>
         ) : null}
-      </div>
+      </GlassCard>
     </AppShell>
   );
 }

@@ -72,12 +72,11 @@ export default function NotificationsPage() {
             </p>
           </GlassCard>
         ) : (
-          <div className="space-y-2.5">
+          <GlassCard padding="md" className="divide-y divide-[var(--border-matte)]">
             {visible.map((item) => (
-              <GlassCard
+              <div
                 key={item.id}
-                padding="sm"
-                className="flex items-start gap-3"
+                className="flex items-start gap-3 py-3 first:pt-0.5 last:pb-0.5"
               >
                 <GlassAvatar
                   name={item.actorName}
@@ -92,9 +91,11 @@ export default function NotificationsPage() {
                           ? `/u/${encodeURIComponent(item.actorUsername)}`
                           : "/"
                       }
-                      className="text-[14px] font-semibold text-[var(--text-primary)] hover:underline"
+                      className="font-mono text-[13.5px] font-semibold text-[var(--text-primary)] hover:underline"
                     >
-                      {item.actorName}
+                      {item.actorUsername !== "system"
+                        ? `@${item.actorUsername}`
+                        : item.actorName}
                     </Link>
                     <div className="flex items-center gap-1.5">
                       {!item.read ? (
@@ -109,9 +110,9 @@ export default function NotificationsPage() {
                     {item.text}
                   </p>
                 </div>
-              </GlassCard>
+              </div>
             ))}
-          </div>
+          </GlassCard>
         )}
       </div>
     </AppShell>

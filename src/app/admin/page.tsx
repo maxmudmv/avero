@@ -370,7 +370,7 @@ export default function AdminPage() {
                   {reports.map((rep) => (
                     <div
                       key={rep.id}
-                      className="rounded-2xl border border-[var(--border-matte)] bg-[var(--surface-input)] p-3.5 space-y-2"
+                      className="border-b border-[var(--border-matte)] py-3.5 last:border-b-0 space-y-2"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
                         <span className="font-mono text-[var(--text-secondary)]">
@@ -452,7 +452,7 @@ export default function AdminPage() {
                     {flags.map((f) => (
                       <div
                         key={f.id}
-                        className="rounded-2xl border border-[var(--border-matte)] p-3.5 space-y-2"
+                        className="border-b border-[var(--border-matte)] py-3.5 last:border-b-0 space-y-2"
                       >
                         <div className="flex items-center justify-between text-[12px]">
                           <span className="font-mono text-[var(--text-secondary)]">
@@ -526,7 +526,7 @@ export default function AdminPage() {
                 {appeals.map((ap) => (
                   <div
                     key={ap.id}
-                    className="rounded-2xl border border-[var(--border-matte)] p-3.5 space-y-2"
+                    className="border-b border-[var(--border-matte)] py-3.5 last:border-b-0 space-y-2"
                   >
                     <div className="flex items-center justify-between text-[12px]">
                       <span className="font-mono font-semibold text-[var(--text-primary)]">
@@ -593,7 +593,7 @@ export default function AdminPage() {
               {usersList.map((u) => (
                 <div
                   key={u.userId}
-                  className="rounded-2xl border border-[var(--border-matte)] bg-[var(--surface-input)] p-3.5 space-y-2.5"
+                  className="border-b border-[var(--border-matte)] py-3.5 last:border-b-0 space-y-2.5"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
@@ -746,7 +746,7 @@ export default function AdminPage() {
               {auditLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="rounded-2xl border border-[var(--border-matte)] px-3.5 py-2.5 text-[12.5px] space-y-1"
+                  className="border-b border-[var(--border-matte)] py-2.5 last:border-b-0 text-[12.5px] space-y-1"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-mono font-semibold text-[var(--text-primary)]">
@@ -886,7 +886,7 @@ export default function AdminPage() {
               return (
                 <label
                   key={item.code}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-[var(--border-matte)] px-3 py-2 text-[13px] cursor-pointer"
+                  className="flex items-center justify-between gap-2 border-b border-[var(--border-matte)] py-2 last:border-b-0 text-[13px] cursor-pointer"
                 >
                   <span>{item.label}</span>
                   <input

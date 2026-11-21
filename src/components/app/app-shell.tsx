@@ -805,8 +805,8 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                       </GlassButton>
                     </div>
 
-                    {/* Account / Sign-in Card right inside Menu */}
-                    <div className="mb-3 rounded-2xl border border-[var(--border-matte)] bg-[var(--surface-input)]/75 p-3">
+                    {/* Account / Sign-in Header (flat inside Menu container, no nested box) */}
+                    <div className="mb-3 border-b border-[var(--border-matte)] pb-3.5">
                       {auth?.profile ? (
                         <div className="space-y-2.5">
                           <div className="flex items-center justify-between gap-3">
@@ -910,7 +910,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                       {menuItems.map((item) => {
                         const Icon = item.icon;
                         const isCurrent = pathname === item.href;
@@ -928,10 +928,10 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                               router.push(item.href);
                             }}
                             className={cn(
-                              "glass-focus-ring relative flex flex-col items-start gap-2 rounded-2xl border p-3.5 text-left transition-colors cursor-pointer",
+                              "glass-focus-ring relative flex flex-col items-start gap-2 rounded-2xl p-3 text-left transition-colors cursor-pointer",
                               isCurrent
-                                ? "border-[var(--border-matte-hover)] bg-white/[0.08] text-[var(--text-primary)]"
-                                : "border-[var(--border-matte)] bg-[var(--surface-matte)]/75 text-[var(--text-primary)] hover:bg-[var(--surface-matte)]"
+                                ? "bg-white/[0.08] text-[var(--text-primary)]"
+                                : "text-[var(--text-primary)] hover:bg-white/[0.04]"
                             )}
                           >
                             <div className="relative z-10 flex w-full items-center justify-between">

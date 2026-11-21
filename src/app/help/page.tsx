@@ -36,8 +36,8 @@ export default function HelpPage() {
 
   return (
     <AppShell title="Yordam">
-      <div className="space-y-4">
-        <GlassCard padding="lg" className="space-y-3">
+      <GlassCard padding="lg" className="divide-y divide-[var(--border-matte)]">
+        <section className="space-y-3 pb-6">
           <div className="flex items-center gap-2">
             <GlassBadge variant="glass">
               <ShieldCheck className="h-3 w-3" />
@@ -68,7 +68,7 @@ export default function HelpPage() {
 
             <Link
               href="/design-system"
-              className="liquid-glass glass-focus-ring inline-flex h-11 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium text-[var(--text-primary)]"
+              className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-11 items-center gap-2 rounded-full px-5 text-[14px] font-medium text-[var(--text-primary)]"
             >
               <Sparkles className="relative z-10 h-4 w-4" />
               <span className="relative z-10">Design System Demo</span>
@@ -80,13 +80,13 @@ export default function HelpPage() {
               Natija: {healthStatus}
             </p>
           ) : null}
-        </GlassCard>
+        </section>
 
-        <GlassCard padding="md" className="space-y-2.5">
+        <section className="space-y-2.5 pt-6">
           <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">
             Tez-tez beriladigan savollar
           </h2>
-          <div className="space-y-2 text-[13.5px] text-[var(--text-secondary)]">
+          <div className="space-y-2.5 text-[13.5px] text-[var(--text-secondary)]">
             <p>
               <strong>Nega rasm/video yuklab bo‘lmaydi?</strong> — Platforma
               shovqinsiz, tezkor va faqat matnli muloqotga ixtisoslashgan.
@@ -97,8 +97,8 @@ export default function HelpPage() {
               kriptografik token orqali amalga oshiriladi.
             </p>
           </div>
-        </GlassCard>
-      </div>
+        </section>
+      </GlassCard>
     </AppShell>
   );
 }

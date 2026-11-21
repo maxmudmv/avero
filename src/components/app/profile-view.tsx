@@ -472,8 +472,8 @@ export function ProfileView({
           <p className="text-[12.5px] text-[var(--text-secondary)]">
             {t.profile.dailyActivityDesc}
           </p>
-          <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-            <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
+          <div className="grid grid-cols-3 divide-x divide-[var(--border-matte)] border-t border-[var(--border-matte)] pt-3 text-center">
+            <div className="px-2">
               <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
                 {activity.activeDaysCount ?? 1} {t.profile.daysUnit}
               </div>
@@ -481,7 +481,7 @@ export function ProfileView({
                 {t.profile.activeDaysLabel}
               </div>
             </div>
-            <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
+            <div className="px-2">
               <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
                 {activity.accountAgeDays} {t.profile.daysUnit}
               </div>
@@ -489,7 +489,7 @@ export function ProfileView({
                 {t.profile.profileAgeLabel}
               </div>
             </div>
-            <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
+            <div className="px-2">
               <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
                 {activity.unlockedAvatars.length}/30
               </div>
@@ -503,15 +503,15 @@ export function ProfileView({
 
       {/* Owner-Only Incoming Follow Requests */}
       {isOwner && followRequests.length > 0 ? (
-        <GlassCard padding="md" className="space-y-3">
+        <GlassCard padding="md" className="space-y-2">
           <h2 className="text-[14.5px] font-semibold text-[var(--text-primary)]">
-            Kuzatish so‘rovlari ({followRequests.length})
+            {t.profile.followRequests(followRequests.length)}
           </h2>
-          <div className="space-y-2">
+          <div className="divide-y divide-[var(--border-matte)]">
             {followRequests.map((req) => (
               <div
                 key={req.id}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border-matte)] p-3"
+                className="flex items-center justify-between gap-3 py-2.5 first:pt-1 last:pb-0"
               >
                 <div className="flex items-center gap-2.5">
                   <GlassAvatar
@@ -747,7 +747,7 @@ export function ProfileView({
               {externalLinks.map((lnk, idx) => (
                 <div
                   key={`${lnk.url}_${idx}`}
-                  className="flex items-center justify-between rounded-xl border border-[var(--border-matte)] px-3 py-2 text-[12.5px]"
+                  className="flex items-center justify-between border-b border-[var(--border-matte)] py-2 text-[12.5px]"
                 >
                   <span className="truncate">
                     <strong>{lnk.label}:</strong> {lnk.url}
@@ -788,7 +788,7 @@ export function ProfileView({
                 ]}
               />
 
-              <label className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border-matte)] px-4 py-3 text-[13.5px] cursor-pointer">
+              <label className="flex items-center justify-between gap-3 py-2 text-[13.5px] cursor-pointer">
                 <span>Onlayn holatini ko‘rsatish</span>
                 <input
                   type="checkbox"

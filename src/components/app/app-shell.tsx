@@ -953,11 +953,11 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
           )
         : null}
 
-      {/* Bottom Floating Liquid Glass Dock — grid-cols-4 (living prismatic rim) */}
+      {/* Bottom Floating Liquid Glass Dock — grid-cols-4 (quiet outer bar, orbiting comet rim strictly on the active tab) */}
       <div className="pointer-events-none fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-lg pb-[env(safe-area-inset-bottom)]">
         <nav
           aria-label="Asosiy navigatsiya"
-          className="liquid-glass pointer-events-auto grid grid-cols-4 gap-1 rounded-[28px] p-1.5"
+          className="liquid-glass-quiet pointer-events-auto grid grid-cols-4 gap-1 rounded-[28px] p-1.5"
         >
           {dockTabs.map((tab) => {
             const Icon = tab.icon;
@@ -986,7 +986,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                     layoutId="avero-bottom-dock-capsule"
                     transition={LIQUID_TAB_SPRING}
                     aria-hidden="true"
-                    className="absolute inset-0 rounded-[22px] border border-white/[0.08] bg-white/[0.08]"
+                    className="liquid-comet-rim absolute inset-0 rounded-[22px] bg-white/[0.06]"
                   />
                 ) : null}
                 <Icon

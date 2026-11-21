@@ -183,11 +183,12 @@ body {
     box-shadow: 0 18px 44px -16px rgba(0, 0, 0, 0.82);
   }
 
-  /* --- Monochrome Transparent Glass with Slow Comet-Tail Rim (Buttons & Bottom Dock) --- */
+  /* --- Monochrome Transparent Glass (Static delicate hairline rim on regular buttons) --- */
   .liquid-glass {
     position: relative;
     isolation: isolate;
     background-color: var(--glass-fill);
+    border: 1px solid var(--border-matte-hover);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
     backdrop-filter: blur(20px) saturate(160%);
     box-shadow: var(--glass-shadow);
@@ -195,11 +196,10 @@ body {
   }
 
   /*
-   * Slow monochrome orbiting comet border:
-   * - Dark theme: crisp white head with long smoothly fading white tail
-   * - Light theme: crisp black head with long smoothly fading black tail
+   * Slow monochrome orbiting comet border — strictly used on the
+   * currently active bottom dock tab capsule (.liquid-comet-rim).
    */
-  .liquid-glass::before {
+  .liquid-comet-rim::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -229,11 +229,6 @@ body {
     mask-composite: exclude;
     pointer-events: none;
     z-index: 1;
-  }
-
-  /* Offset phase on adjacent sibling buttons so neighboring beams orbit gracefully out of phase */
-  .liquid-glass:nth-of-type(even)::before {
-    animation-delay: -4.25s;
   }
 
   /* Radial pointer/touch glare layer */

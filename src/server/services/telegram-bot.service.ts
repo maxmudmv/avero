@@ -1,6 +1,10 @@
 import "server-only";
 import { and, eq } from "drizzle-orm";
 import { getServerEnv } from "@/lib/env";
+import {
+  AccountLinkingError,
+  completeAccountLinkWithToken,
+} from "@/server/auth/linking";
 import { withDbContext } from "@/server/db/context";
 import { authIdentities, userSettings } from "@/server/db/schema";
 
@@ -221,6 +225,45 @@ export async function handleTelegramWebhookUpdate(update: {
 
   const tgUserId = String(msg.from.id);
   const chatId = String(msg.chat.id);
+  const startArg = text.replace(/^\/start\s*/i, "").trim();
+
+  // Handle /start link_<token> account linking directly via Telegram Bot
+  if (startArg.startsWith("link_")) {
+    const rawLinkToken = startArg.slice("link_".length).trim();
+    if (rawLinkToken) {
+      try {
+        const linked = await completeAccountLinkWithToken({
+          rawLinkToken,
+          provider: "telegram",
+          providerUserId: tgUserId,
+        });
+        await withDbContext({ authFlow: true }, async (tx) => {
+          await tx
+            .update(userSettings)
+            .set({
+              telegramBotStarted: true,
+              telegramChatId: chatId,
+              updatedAt: new Date(),
+            })
+            .where(eq(userSettings.userId, linked.userId));
+        });
+        await sendTelegramBotMessage(
+          chatId,
+          "✅ Telegram akkauntingiz Avero profilingizga muvaffaqiyatli ulandi!",
+          buildBotStartReplyMarkup(env.APP_URL)
+        );
+        return { handled: true, startedUserId: linked.userId };
+      } catch (err) {
+        const errMsg =
+          err instanceof AccountLinkingError &&
+          err.code === "ACCOUNT_ALREADY_LINKED"
+            ? "⚠️ Bu Telegram akkaunt allaqachon boshqa Avero profiliga ulangan."
+            : "⚠️ Ulash havolasi eskirgan yoki ishlatilgan. Sozlamalardan qaytadan «Telegram ulash» tugmasini bosing.";
+        await sendTelegramBotMessage(chatId, errMsg);
+        return { handled: true };
+      }
+    }
+  }
 
   const startedUserId = await withDbContext({ authFlow: true }, async (tx) => {
     const [identity] = await tx

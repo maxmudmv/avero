@@ -843,11 +843,9 @@ authRoutes.post(
         requestId: c.get("requestId"),
       });
 
-      const deepLink =
-        env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME &&
-        env.NEXT_PUBLIC_TELEGRAM_APP_SHORT_NAME
-          ? `https://t.me/${env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}/${env.NEXT_PUBLIC_TELEGRAM_APP_SHORT_NAME}?startapp=link_${linkToken}`
-          : null;
+      const botUsername =
+        env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "averoappbot";
+      const deepLink = `https://t.me/${botUsername}?start=link_${linkToken}`;
 
       return c.json({
         ok: true,

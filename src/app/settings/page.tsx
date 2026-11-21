@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Ban, Bell, Check, Link2, LogOut, Moon, Scale, Send, Sun } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
+import { useTelegramMiniApp } from "@/components/app/telegram-webapp-provider";
 import {
   GlassAvatar,
   GlassButton,
@@ -41,12 +42,12 @@ function SettingToggle({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
+    <div className="flex items-center justify-between gap-3 py-2">
       <div className="min-w-0">
-        <div className="text-[14px] font-medium text-[var(--text-primary)]">
+        <div className="text-[13.5px] font-medium text-[var(--text-primary)]">
           {label}
         </div>
-        <div className="text-[12px] text-[var(--text-muted)]">
+        <div className="text-[11.5px] text-[var(--text-muted)]">
           {description}
         </div>
       </div>
@@ -57,17 +58,17 @@ function SettingToggle({
         aria-label={label}
         onClick={() => onChange(!checked)}
         className={cn(
-          "glass-focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors cursor-pointer",
+          "glass-focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors cursor-pointer",
           checked
-            ? "border-sky-400/40 bg-sky-400/25"
+            ? "border-[var(--text-primary)] bg-[var(--text-primary)]"
             : "border-[var(--border-matte)] bg-[var(--surface-input)]"
         )}
       >
         <span
           className={cn(
-            "inline-block h-5 w-5 rounded-full transition-transform",
+            "inline-block h-4 w-4 rounded-full transition-transform",
             checked
-              ? "translate-x-6 bg-sky-400"
+              ? "translate-x-5 bg-[var(--bg-canvas)]"
               : "translate-x-1 bg-[var(--text-muted)]"
           )}
         />
@@ -121,6 +122,7 @@ function Segmented({
 
 export default function SettingsPage() {
   const { theme, resolvedTheme, setTheme, toast } = useDesignSystem();
+  const { isTma, initData, webApp } = useTelegramMiniApp();
   const {
     auth,
     refreshAuth,
@@ -160,7 +162,7 @@ export default function SettingsPage() {
   );
   const [saving, setSaving] = useState(false);
   const [confirmingBot, setConfirmingBot] = useState(false);
-  const [consentLink, setConsentLink] = useState(false);
+  const [linkingTg, setLinkingTg] = useState(false);
   const [telegramLinkDeepLink, setTelegramLinkDeepLink] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<ServerBlockItem[]>([]);
   const [warnings, setWarnings] = useState<
@@ -312,26 +314,51 @@ export default function SettingsPage() {
   };
 
   const handleLinkTelegram = async () => {
-    if (!consentLink) {
+    setLinkingTg(true);
+    try {
+      const res = await apiClient.initTelegramLink();
+      if (!res.ok) {
+        toast({ title: res.error.message, variant: "error" });
+        return;
+      }
+
+      // 1. Inside Telegram Mini App: complete the link immediately with signed initData
+      if (isTma && initData) {
+        const confirmRes = await apiClient.confirmTelegramLink(
+          initData,
+          res.data.linkToken
+        );
+        if (confirmRes.ok) {
+          if (confirmRes.data.sessionToken) {
+            setTmaSessionToken(confirmRes.data.sessionToken);
+          }
+          await refreshAuth();
+          toast({
+            title: "Telegram akkaunt muvaffaqiyatli ulandi",
+            variant: "success",
+          });
+        } else {
+          toast({ title: confirmRes.error.message, variant: "error" });
+        }
+        return;
+      }
+
+      // 2. On Web browser: open @averoappbot?start=link_<token>
+      const linkUrl =
+        res.data.deepLink ||
+        `https://t.me/averoappbot?start=link_${res.data.linkToken}`;
+      setTelegramLinkDeepLink(linkUrl);
+      if (webApp?.openTelegramLink) {
+        webApp.openTelegramLink(linkUrl);
+      } else {
+        window.open(linkUrl, "_blank", "noopener,noreferrer");
+      }
       toast({
-        title: "Rozilik talab qilinadi",
-        description: "Akkaunt bog‘lash roziligini tasdiqlang.",
-        variant: "warning",
-      });
-      return;
-    }
-    const res = await apiClient.initTelegramLink();
-    if (res.ok) {
-      setTelegramLinkDeepLink(res.data.deepLink);
-      toast({
-        title: "Bog‘lash havolasi tayyor",
-        description: res.data.deepLink
-          ? "Telegram Mini App orqali tasdiqlang."
-          : "Bir martalik bog‘lash tokeni yaratildi.",
+        title: "Telegram botda Start tugmasini bosing",
         variant: "success",
       });
-    } else {
-      toast({ title: res.error.message, variant: "error" });
+    } finally {
+      setLinkingTg(false);
     }
   };
 
@@ -360,8 +387,8 @@ export default function SettingsPage() {
   return (
     <AppShell title={t.settings.pageTitle}>
       <GlassCard
-        padding="lg"
-        className="divide-y divide-[var(--border-matte)] [&>section]:py-6 [&>section:first-child]:pt-0 [&>section:last-child]:pb-0"
+        padding="md"
+        className="divide-y divide-[var(--border-matte)] [&>section]:py-4 [&>section:first-child]:pt-0 [&>section:last-child]:pb-0"
       >
         {/* 1. Til va Mavzu — ixcham qatorlar */}
         <section className="divide-y divide-[var(--border-matte)]">
@@ -568,7 +595,7 @@ export default function SettingsPage() {
           ) : (
             <>
               <div className="divide-y divide-[var(--border-matte)] text-[13.5px]">
-                <div className="flex items-center justify-between py-3">
+                <div className="flex items-center justify-between py-2.5">
                   <span className="text-[var(--text-primary)]">Google</span>
                   <span
                     className={cn(
@@ -579,63 +606,46 @@ export default function SettingsPage() {
                     {hasGoogle ? t.settings.connected : t.settings.notConnected}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-3">
+                <div className="flex items-center justify-between gap-2 py-2.5">
                   <span className="text-[var(--text-primary)]">Telegram</span>
-                  <span
-                    className={cn(
-                      "text-[12.5px]",
-                      hasTelegram ? "text-emerald-400" : "text-[var(--text-muted)]"
-                    )}
-                  >
-                    {hasTelegram ? t.settings.connected : t.settings.notConnected}
-                  </span>
-                </div>
-                {!hasTelegram ? (
-                  <div className="space-y-3 py-3">
-                    <label className="flex items-start gap-2.5 text-[12.5px] text-[var(--text-secondary)] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={consentLink}
-                        onChange={(e) => setConsentLink(e.target.checked)}
-                        className="mt-0.5 accent-sky-400"
-                      />
-                      <span>
-                        Telegram akkauntimni joriy profilimga o‘z roziligim bilan
-                        bog‘lashga roziman.
-                      </span>
-                    </label>
-                    <div className="flex flex-wrap items-center gap-4">
+                  {hasTelegram ? (
+                    <span className="text-[12.5px] text-emerald-400">
+                      {t.settings.connected}
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-2">
                       <GlassButton
                         size="sm"
                         variant="glass"
+                        loading={linkingTg}
                         onClick={() => void handleLinkTelegram()}
                       >
                         <Link2 className="h-3.5 w-3.5" />
-                        Telegram ulash
+                        Ulash
                       </GlassButton>
-                      {telegramLinkDeepLink ? (
+                      {telegramLinkDeepLink && !isTma ? (
                         <a
                           href={telegramLinkDeepLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={textLink}
                         >
-                          Telegramda tasdiqlash
+                          Botni ochish
                         </a>
                       ) : null}
                     </div>
-                  </div>
-                ) : null}
+                  )}
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
                 <GlassButton
                   size="sm"
                   variant="glass"
                   onClick={() => void handleLogout(false)}
                 >
                   <LogOut className="h-3.5 w-3.5" />
-                  {t.settings.logoutCurrent}
+                  {t.menu.logout}
                 </GlassButton>
                 <GlassButton
                   size="sm"

@@ -8,9 +8,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
   Bookmark,
+  Eye,
+  EyeOff,
   Feather,
   HelpCircle,
   Home,
+  KeyRound,
   LayoutGrid,
   LogIn,
   LogOut,
@@ -25,7 +28,9 @@ import {
 import {
   GlassAvatar,
   GlassButton,
+  GlassInput,
   GlassModal,
+  GlassTextarea,
   LIQUID_BUTTON_SPRING,
   LIQUID_BUTTON_TAP,
   LIQUID_SHEET_SPRING,
@@ -35,6 +40,7 @@ import {
   triggerHapticSelection,
   useDesignSystem,
 } from "@/design-system";
+import { apiClient, setTmaSessionToken } from "@/lib/api-client";
 import { getPublicEnv } from "@/lib/env";
 import { useAppState } from "./app-state-provider";
 import { useTelegramMiniApp } from "./telegram-webapp-provider";
@@ -68,9 +74,43 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [telegramSigningIn, setTelegramSigningIn] = useState(false);
 
+  // Username + Password Login form state
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [passwordLoggingIn, setPasswordLoggingIn] = useState(false);
+
+  // Post-Google Account Setup (Onboarding) Modal state
+  const [setupModalOpen, setSetupModalOpen] = useState(false);
+  const [setupDismissed, setSetupDismissed] = useState(false);
+  const [setupUsername, setSetupUsername] = useState("");
+  const [setupDisplayName, setSetupDisplayName] = useState("");
+  const [setupBio, setSetupBio] = useState("");
+  const [setupPassword, setSetupPassword] = useState("");
+  const [setupPasswordConfirm, setSetupPasswordConfirm] = useState("");
+  const [showSetupPassword, setShowSetupPassword] = useState(false);
+  const [setupSuggestions, setSetupSuggestions] = useState<string[]>([]);
+  const [savingSetup, setSavingSetup] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Automatically open Account Setup modal after Google sign-in if username+password not yet set
+  useEffect(() => {
+    if (!auth?.user || !auth.profile) {
+      setSetupModalOpen(false);
+      return;
+    }
+    const needsSetup =
+      auth.user.onboardingCompleted === false || auth.user.hasPassword === false;
+    if (needsSetup && !setupDismissed) {
+      setSetupUsername((prev) => prev || auth.profile!.username);
+      setSetupDisplayName((prev) => prev || auth.profile!.displayName);
+      setSetupBio((prev) => prev || auth.profile!.bio || "");
+      setSetupModalOpen(true);
+    }
+  }, [auth, setupDismissed]);
 
   // Show a friendly toast when redirected from OAuth login/error
   useEffect(() => {
@@ -80,7 +120,14 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
     const authError = url.searchParams.get("auth_error");
     if (!authStatus && !authError) return;
 
-    if (authStatus === "success") {
+    if (authStatus === "setup") {
+      setSetupDismissed(false);
+      void refreshAuth();
+      toast({
+        title: "Google bilan kirdingiz! Endi username va parol o‘rnating",
+        variant: "success",
+      });
+    } else if (authStatus === "success") {
       void refreshAuth();
       toast({
         title: "Google hisobingiz bilan tizimga kirdingiz",
@@ -117,6 +164,95 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
       return;
     }
     window.location.href = startUrl;
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const u = loginUsername.trim();
+    const p = loginPassword;
+    if (!u || !p) {
+      toast({ title: "Username va parolni kiriting", variant: "warning" });
+      return;
+    }
+    setPasswordLoggingIn(true);
+    try {
+      const res = await apiClient.loginWithPassword(u, p);
+      if (res.ok) {
+        if (isTma && res.data.sessionToken) {
+          setTmaSessionToken(res.data.sessionToken);
+        }
+        setLoginUsername("");
+        setLoginPassword("");
+        setLoginModalOpen(false);
+        setMenuOpen(false);
+        await refreshAuth();
+        toast({ title: "Tizimga muvaffaqiyatli kirdingiz", variant: "success" });
+      } else {
+        toast({ title: res.error.message, variant: "error" });
+      }
+    } finally {
+      setPasswordLoggingIn(false);
+    }
+  };
+
+  const handleLoadSetupSuggestions = async () => {
+    const seed = setupUsername.trim() || setupDisplayName.trim() || "avero";
+    const res = await apiClient.getUsernameSuggestions(seed);
+    if (res.ok) {
+      setSetupSuggestions(res.data.suggestions);
+    }
+  };
+
+  const handleCompleteSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (setupPassword.length < 6) {
+      toast({
+        title: "Parol kamida 6 ta belgidan iborat bo‘lishi kerak",
+        variant: "warning",
+      });
+      return;
+    }
+    if (setupPassword !== setupPasswordConfirm) {
+      toast({ title: "Parollar mos kelmadi", variant: "warning" });
+      return;
+    }
+
+    setSavingSetup(true);
+    try {
+      const res = await apiClient.completeAccountSetup({
+        username: setupUsername,
+        displayName: setupDisplayName,
+        password: setupPassword,
+        bio: setupBio,
+      });
+      if (res.ok) {
+        setSetupPassword("");
+        setSetupPasswordConfirm("");
+        setSetupModalOpen(false);
+        setSetupDismissed(true);
+        await refreshAuth();
+        toast({
+          title: "Hisobingiz sozlandi!",
+          description: "Endi username va parol bilan ham kira olasiz.",
+          variant: "success",
+        });
+      } else {
+        toast({ title: res.error.message, variant: "error" });
+      }
+    } finally {
+      setSavingSetup(false);
+    }
+  };
+
+  const openSetupManually = () => {
+    if (auth?.profile) {
+      setSetupUsername(auth.profile.username);
+      setSetupDisplayName(auth.profile.displayName);
+      setSetupBio(auth.profile.bio || "");
+    }
+    setSetupDismissed(false);
+    setMenuOpen(false);
+    setSetupModalOpen(true);
   };
 
   const publicEnv = getPublicEnv();
@@ -355,52 +491,219 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
         {children}
       </main>
 
-      {/* Sign In Modal (Telegram + Google) */}
+      {/* Unified Sign In Modal (Username + Password, Google, Telegram) */}
       <GlassModal
         open={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
         title="Avero’ga kirish"
-        description="Post yozish, izoh qoldirish, saqlash va xabar almashish uchun hisobingizga kiring."
+        description="Username va parol bilan kiring yoki Google / Telegram orqali davom eting."
         size="sm"
       >
-        <div className="space-y-3">
-          {isTma ? (
+        <div className="space-y-4">
+          <form onSubmit={handlePasswordLogin} className="space-y-3">
+            <GlassInput
+              label="Username"
+              placeholder="@username"
+              autoComplete="username"
+              value={loginUsername}
+              onChange={(e) => setLoginUsername(e.target.value)}
+            />
+            <GlassInput
+              label="Parol"
+              type={showLoginPassword ? "text" : "password"}
+              placeholder="Parolingizni kiriting"
+              autoComplete="current-password"
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              trailingSlot={
+                <button
+                  type="button"
+                  aria-label="Parolni ko‘rsatish"
+                  onClick={() => setShowLoginPassword((v) => !v)}
+                  className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+                >
+                  {showLoginPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              }
+            />
+            <GlassButton
+              type="submit"
+              variant="glass"
+              size="lg"
+              loading={passwordLoggingIn}
+              className="w-full"
+            >
+              <KeyRound className="h-4 w-4" />
+              Username bilan kirish
+            </GlassButton>
+          </form>
+
+          <div className="flex items-center gap-3 text-[11.5px] text-[var(--text-muted)]">
+            <span className="h-px flex-1 bg-[var(--border-matte)]" />
+            <span>yoki</span>
+            <span className="h-px flex-1 bg-[var(--border-matte)]" />
+          </div>
+
+          <div className="space-y-2.5">
             <GlassButton
               variant="glass"
               size="lg"
-              loading={telegramSigningIn}
-              onClick={() => void handleTelegramSignIn()}
+              onClick={handleGoogleSignIn}
               className="w-full"
             >
-              <Send className="h-4 w-4 text-sky-400" />
-              Telegram orqali kirish
+              <LogIn className="h-4 w-4" />
+              Google bilan kirish
             </GlassButton>
-          ) : (
-            <a
-              href={telegramAppUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full px-6 text-[15px] font-medium text-[var(--text-primary)]"
-            >
-              <Send className="relative z-10 h-4 w-4 text-sky-400" />
-              <span className="relative z-10">Telegram orqali kirish</span>
-            </a>
-          )}
 
-          <GlassButton
-            variant="glass"
-            size="lg"
-            onClick={handleGoogleSignIn}
-            className="w-full"
-          >
-            <LogIn className="h-4 w-4" />
-            Google bilan kirish
-          </GlassButton>
-
-          <p className="pt-1 text-center text-[12px] leading-relaxed text-[var(--text-muted)]">
-            Kirish orqali siz Avero xavfsizlik va hamjamiyat qoidalariga rozilik bildirasiz.
-          </p>
+            {isTma ? (
+              <GlassButton
+                variant="glass"
+                size="lg"
+                loading={telegramSigningIn}
+                onClick={() => void handleTelegramSignIn()}
+                className="w-full"
+              >
+                <Send className="h-4 w-4 text-sky-400" />
+                Telegram orqali kirish
+              </GlassButton>
+            ) : (
+              <a
+                href={telegramAppUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full px-6 text-[15px] font-medium text-[var(--text-primary)]"
+              >
+                <Send className="relative z-10 h-4 w-4 text-sky-400" />
+                <span className="relative z-10">Telegram orqali kirish</span>
+              </a>
+            )}
+          </div>
         </div>
+      </GlassModal>
+
+      {/* Post-Google Initial Account Setup Modal (Username + Password + Display Name + Bio) */}
+      <GlassModal
+        open={setupModalOpen}
+        onClose={() => {
+          setSetupDismissed(true);
+          setSetupModalOpen(false);
+        }}
+        title="Hisobingizni sozlang"
+        description="Username va parol o‘rnating — keyingi safar to‘g‘ridan-to‘g‘ri username va parol bilan ham kira olasiz."
+        size="sm"
+        footer={
+          <>
+            <GlassButton
+              variant="ghost"
+              onClick={() => {
+                setSetupDismissed(true);
+                setSetupModalOpen(false);
+              }}
+            >
+              Keyinroq
+            </GlassButton>
+            <GlassButton
+              variant="glass"
+              loading={savingSetup}
+              onClick={(e) => void handleCompleteSetup(e)}
+            >
+              Saqlash
+            </GlassButton>
+          </>
+        }
+      >
+        <form onSubmit={handleCompleteSetup} className="space-y-3.5">
+          <div className="space-y-2">
+            <div className="flex items-end gap-2">
+              <GlassInput
+                label="Username (5–20 belgi: a-z, 0-9, ., _)"
+                placeholder="masalan: maxmud_01"
+                value={setupUsername}
+                onChange={(e) => setSetupUsername(e.target.value)}
+                maxLength={20}
+              />
+              <GlassButton
+                type="button"
+                variant="subtle"
+                size="md"
+                onClick={() => void handleLoadSetupSuggestions()}
+                className="shrink-0"
+              >
+                Takliflar
+              </GlassButton>
+            </div>
+
+            {setupSuggestions.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {setupSuggestions.map((sug) => (
+                  <button
+                    key={sug}
+                    type="button"
+                    onClick={() => setSetupUsername(sug)}
+                    className="rounded-full border border-[var(--border-matte)] px-2.5 py-0.5 font-mono text-[11.5px] text-sky-400 hover:bg-[var(--glass-fill-subtle)] cursor-pointer"
+                  >
+                    @{sug}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <GlassInput
+            label="Ko‘rinadigan ism (1–40 belgi)"
+            placeholder="Ismingiz"
+            value={setupDisplayName}
+            onChange={(e) => setSetupDisplayName(e.target.value)}
+            maxLength={40}
+          />
+
+          <GlassInput
+            label="Parol (kamida 6 ta belgi)"
+            type={showSetupPassword ? "text" : "password"}
+            placeholder="Yangi parol yarating"
+            autoComplete="new-password"
+            value={setupPassword}
+            onChange={(e) => setSetupPassword(e.target.value)}
+            maxLength={72}
+            trailingSlot={
+              <button
+                type="button"
+                aria-label="Parolni ko‘rsatish"
+                onClick={() => setShowSetupPassword((v) => !v)}
+                className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+              >
+                {showSetupPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            }
+          />
+
+          <GlassInput
+            label="Parolni tasdiqlang"
+            type={showSetupPassword ? "text" : "password"}
+            placeholder="Parolni qayta kiriting"
+            autoComplete="new-password"
+            value={setupPasswordConfirm}
+            onChange={(e) => setSetupPasswordConfirm(e.target.value)}
+            maxLength={72}
+          />
+
+          <GlassTextarea
+            label="Bio (ixtiyoriy, maksimum 150 belgi)"
+            placeholder="O‘zingiz haqingizda qisqacha..."
+            value={setupBio}
+            onChange={(e) => setSetupBio(e.target.value)}
+            maxLength={150}
+            rows={2}
+          />
+        </form>
       </GlassModal>
 
       {/* Explicit-Consent Telegram Account Linking Confirmation Modal (TMA startapp=link_*) */}
@@ -501,45 +804,71 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                     {/* Account / Sign-in Card right inside Menu */}
                     <div className="mb-3 rounded-2xl border border-[var(--border-matte)] bg-[var(--surface-input)]/75 p-3">
                       {auth?.profile ? (
-                        <div className="flex items-center justify-between gap-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMenuOpen(false);
-                              router.push("/profile");
-                            }}
-                            className="flex min-w-0 items-center gap-2.5 text-left cursor-pointer"
-                          >
-                            <GlassAvatar
-                              name={auth.profile.displayName}
-                              seed={auth.profile.username}
-                              avatarId={auth.profile.avatarId}
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between gap-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuOpen(false);
+                                router.push("/profile");
+                              }}
+                              className="flex min-w-0 items-center gap-2.5 text-left cursor-pointer"
+                            >
+                              <GlassAvatar
+                                name={auth.profile.displayName}
+                                seed={auth.profile.username}
+                                avatarId={auth.profile.avatarId}
+                                size="sm"
+                              />
+                              <div className="min-w-0">
+                                <div className="truncate text-[13.5px] font-semibold text-[var(--text-primary)]">
+                                  {auth.profile.displayName}
+                                </div>
+                                <div className="truncate font-mono text-[11.5px] text-[var(--text-muted)]">
+                                  @{auth.profile.username}
+                                </div>
+                              </div>
+                            </button>
+                            <GlassButton
                               size="sm"
-                            />
-                            <div className="min-w-0">
-                              <div className="truncate text-[13.5px] font-semibold text-[var(--text-primary)]">
-                                {auth.profile.displayName}
-                              </div>
-                              <div className="truncate font-mono text-[11.5px] text-[var(--text-muted)]">
-                                @{auth.profile.username}
-                              </div>
-                            </div>
-                          </button>
-                          <GlassButton
-                            size="sm"
-                            variant="subtle"
-                            onClick={() => void handleLogout()}
-                            className="h-8 shrink-0 px-3 text-[12px]"
-                          >
-                            <LogOut className="h-3.5 w-3.5" />
-                            Chiqish
-                          </GlassButton>
+                              variant="subtle"
+                              onClick={() => void handleLogout()}
+                              className="h-8 shrink-0 px-3 text-[12px]"
+                            >
+                              <LogOut className="h-3.5 w-3.5" />
+                              Chiqish
+                            </GlassButton>
+                          </div>
+
+                          {!auth.user?.hasPassword ? (
+                            <GlassButton
+                              size="sm"
+                              variant="glass"
+                              onClick={openSetupManually}
+                              className="w-full"
+                            >
+                              <KeyRound className="h-3.5 w-3.5" />
+                              Username va parol o‘rnatish
+                            </GlassButton>
+                          ) : null}
                         </div>
                       ) : (
                         <div className="flex flex-col gap-2.5">
                           <div className="text-[12.5px] text-[var(--text-secondary)]">
                             Shaxsiy profil, postlar va bildirishnomalar uchun tizimga kiring
                           </div>
+                          <GlassButton
+                            size="sm"
+                            variant="glass"
+                            onClick={() => {
+                              setMenuOpen(false);
+                              setLoginModalOpen(true);
+                            }}
+                            className="w-full"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
+                            Username va parol bilan kirish
+                          </GlassButton>
                           <div className="grid grid-cols-2 gap-2">
                             {isTma ? (
                               <GlassButton

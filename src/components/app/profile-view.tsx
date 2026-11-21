@@ -461,41 +461,37 @@ export function ProfileView({
         </div>
       </GlassCard>
 
-      {/* Owner-Only 3-Day Activity Card (Strictly hidden from other users) */}
+      {/* Owner-Only Daily Activity & Avatar Unlock Card (Strictly hidden from other users) */}
       {isOwner && activity ? (
         <GlassCard padding="md" className="space-y-2.5">
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--text-primary)]">
               <Sparkles className="h-4 w-4 text-sky-400" />
-              Shaxsiy faollik (3 kunlik tartib)
+              Kunlik faollik va avatarlar
             </span>
-            <GlassBadge
-              variant={activity.withinThreeDayCadence ? "success" : "warning"}
-            >
-              {activity.withinThreeDayCadence
-                ? "Faol (3 kun ichida)"
-                : "Post kutilmoqda"}
+            <GlassBadge variant="success">
+              {activity.activeDaysCount ?? 1}-faol kun
             </GlassBadge>
           </div>
           <p className="text-[12.5px] text-[var(--text-secondary)]">
-            Har 3 kunda kamida bir marta kirib post joylash yangi original
-            avatarlarni vaqt bilan birga ochib boradi. (Faqat sizga ko‘rinadi)
+            Har faol bo‘lgan kuningizda 1 tadan yangi avatar avtomatik ochilib
+            boradi. (Faqat sizga ko‘rinadi)
           </p>
           <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+            <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
+              <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
+                {activity.activeDaysCount ?? 1} kun
+              </div>
+              <div className="text-[11px] text-[var(--text-muted)]">
+                Faol kunlar
+              </div>
+            </div>
             <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
               <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
                 {activity.accountAgeDays} kun
               </div>
               <div className="text-[11px] text-[var(--text-muted)]">
                 Profil yoshi
-              </div>
-            </div>
-            <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
-              <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
-                {activity.activeThreeDayCycles}
-              </div>
-              <div className="text-[11px] text-[var(--text-muted)]">
-                3 kunlik sikl
               </div>
             </div>
             <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">

@@ -2,6 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import {
   computeUnlockedAvatarIds,
+  getAvatarById,
   STARTER_AVATAR_IDS,
 } from "@/lib/avatars/catalog";
 import { type DbTransaction, withDbContext } from "@/server/db/context";
@@ -14,12 +15,26 @@ import {
 import { createNotificationInTx } from "./social.service";
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+const TASHKENT_OFFSET_MS = 5 * 60 * 60 * 1000;
+
+/**
+ * Returns YYYY-MM-DD in Asia/Tashkent (UTC+5) so each distinct active calendar day
+ * unlocks exactly +1 new avatar at midnight local time.
+ */
+export function getActiveDayKey(now = new Date()): string {
+  const local = new Date(now.getTime() + TASHKENT_OFFSET_MS);
+  const y = local.getUTCFullYear();
+  const m = String(local.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(local.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 export interface OwnerActivityStats {
   lastVisitAt: string;
   lastPostAt: string | null;
   lastQualifiedAt: string | null;
   activeThreeDayCycles: number;
+  activeDaysCount: number;
   totalVisitsCount: number;
   accountAgeDays: number;
   nextPostDeadlineAt: string;
@@ -30,7 +45,12 @@ export interface OwnerActivityStats {
 async function ensureActivityRow(tx: DbTransaction, userId: string) {
   await tx
     .insert(userActivity)
-    .values({ userId })
+    .values({
+      userId,
+      activeDaysCount: 1,
+      lastActiveDay: getActiveDayKey(),
+      unlockedAvatars: STARTER_AVATAR_IDS,
+    })
     .onConflictDoNothing();
 
   const [row] = await tx
@@ -40,6 +60,29 @@ async function ensureActivityRow(tx: DbTransaction, userId: string) {
     .limit(1);
 
   return row!;
+}
+
+function advanceActiveDayCounter(
+  row: { activeDaysCount: number; lastActiveDay: string | null },
+  now: Date
+): { activeDaysCount: number; lastActiveDay: string } {
+  const todayKey = getActiveDayKey(now);
+  if (!row.lastActiveDay) {
+    return {
+      activeDaysCount: Math.max(1, row.activeDaysCount || 1),
+      lastActiveDay: todayKey,
+    };
+  }
+  if (row.lastActiveDay === todayKey) {
+    return {
+      activeDaysCount: Math.max(1, row.activeDaysCount || 1),
+      lastActiveDay: todayKey,
+    };
+  }
+  return {
+    activeDaysCount: Math.max(1, row.activeDaysCount || 1) + 1,
+    lastActiveDay: todayKey,
+  };
 }
 
 export async function recordActivityVisitInTx(
@@ -63,13 +106,22 @@ export async function recordActivityVisitInTx(
   const accountAgeDays = userRow
     ? Math.max(
         0,
-        Math.floor((now.getTime() - userRow.createdAt.getTime()) / (24 * 3600 * 1000))
+        Math.floor(
+          (now.getTime() - userRow.createdAt.getTime()) / (24 * 3600 * 1000)
+        )
       )
     : 0;
 
-  const prevSet = new Set(row.unlockedAvatars ?? STARTER_AVATAR_IDS);
+  const { activeDaysCount, lastActiveDay } = advanceActiveDayCounter(row, now);
+  const prevList =
+    row.unlockedAvatars && row.unlockedAvatars.length > 0
+      ? row.unlockedAvatars
+      : STARTER_AVATAR_IDS;
+  const prevSet = new Set(prevList);
+
   const unlocked = computeUnlockedAvatarIds({
-    previouslyUnlocked: row.unlockedAvatars ?? STARTER_AVATAR_IDS,
+    previouslyUnlocked: prevList,
+    activeDaysCount,
     accountAgeDays,
     activeThreeDayCycles: row.activeThreeDayCycles,
     postsCount: profileRow?.postsCount ?? 0,
@@ -80,6 +132,8 @@ export async function recordActivityVisitInTx(
     .update(userActivity)
     .set({
       lastVisitAt: now,
+      activeDaysCount,
+      lastActiveDay,
       totalVisitsCount: row.totalVisitsCount + 1,
       unlockedAvatars: unlocked,
       updatedAt: now,
@@ -87,11 +141,14 @@ export async function recordActivityVisitInTx(
     .where(eq(userActivity.userId, userId));
 
   if (newlyUnlocked.length > 0) {
+    const unlockedNames = newlyUnlocked
+      .map((id) => getAvatarById(id).name)
+      .join(", ");
     await createNotificationInTx(tx, {
       recipientId: userId,
       actorId: userId,
       type: "avatar_unlocked",
-      bodyPreview: newlyUnlocked.join(", "),
+      bodyPreview: unlockedNames,
     });
   }
 
@@ -104,8 +161,7 @@ export async function recordActivityVisitInTx(
 }
 
 /**
- * Evaluates the 3-day cadence rule when a post is published:
- * User must visit and publish a post at least once every 3 days.
+ * Updates daily active avatar unlock progress and 3-day cadence when a post is published.
  */
 export async function recordActivityPostInTx(
   tx: DbTransaction,
@@ -135,7 +191,6 @@ export async function recordActivityPostInTx(
   } else {
     const elapsedMs = now.getTime() - lastQual.getTime();
     if (elapsedMs >= THREE_DAYS_MS) {
-      // A new 3-day period completed
       nextCycles = row.activeThreeDayCycles + 1;
       nextQualifiedAt = now;
     } else if (elapsedMs >= 24 * 3600 * 1000 && row.activeThreeDayCycles === 0) {
@@ -147,13 +202,22 @@ export async function recordActivityPostInTx(
   const accountAgeDays = userRow
     ? Math.max(
         0,
-        Math.floor((now.getTime() - userRow.createdAt.getTime()) / (24 * 3600 * 1000))
+        Math.floor(
+          (now.getTime() - userRow.createdAt.getTime()) / (24 * 3600 * 1000)
+        )
       )
     : 0;
 
-  const prevSet = new Set(row.unlockedAvatars ?? STARTER_AVATAR_IDS);
+  const { activeDaysCount, lastActiveDay } = advanceActiveDayCounter(row, now);
+  const prevList =
+    row.unlockedAvatars && row.unlockedAvatars.length > 0
+      ? row.unlockedAvatars
+      : STARTER_AVATAR_IDS;
+  const prevSet = new Set(prevList);
+
   const unlockedAvatars = computeUnlockedAvatarIds({
-    previouslyUnlocked: row.unlockedAvatars ?? STARTER_AVATAR_IDS,
+    previouslyUnlocked: prevList,
+    activeDaysCount,
     accountAgeDays,
     activeThreeDayCycles: nextCycles,
     postsCount: (profileRow?.postsCount ?? 0) + 1,
@@ -167,17 +231,22 @@ export async function recordActivityPostInTx(
       lastPostAt: now,
       lastQualifiedAt: nextQualifiedAt,
       activeThreeDayCycles: nextCycles,
+      activeDaysCount,
+      lastActiveDay,
       unlockedAvatars,
       updatedAt: now,
     })
     .where(eq(userActivity.userId, userId));
 
   if (newlyUnlocked.length > 0) {
+    const unlockedNames = newlyUnlocked
+      .map((id) => getAvatarById(id).name)
+      .join(", ");
     await createNotificationInTx(tx, {
       recipientId: userId,
       actorId: userId,
       type: "avatar_unlocked",
-      bodyPreview: newlyUnlocked.join(", "),
+      bodyPreview: unlockedNames,
     });
   }
 
@@ -216,14 +285,17 @@ export async function getOwnerActivityStats(
     const accountAgeDays = userRow
       ? Math.max(
           0,
-          Math.floor((now.getTime() - userRow.createdAt.getTime()) / (24 * 3600 * 1000))
+          Math.floor(
+            (now.getTime() - userRow.createdAt.getTime()) / (24 * 3600 * 1000)
+          )
         )
       : 0;
 
     const anchor = row.lastPostAt ?? userRow?.createdAt ?? now;
     const deadline = new Date(anchor.getTime() + THREE_DAYS_MS);
     const withinThreeDayCadence =
-      Boolean(row.lastPostAt) && now.getTime() - row.lastPostAt!.getTime() <= THREE_DAYS_MS;
+      Boolean(row.lastPostAt) &&
+      now.getTime() - row.lastPostAt!.getTime() <= THREE_DAYS_MS;
 
     return {
       lastVisitAt: row.lastVisitAt.toISOString(),
@@ -232,6 +304,7 @@ export async function getOwnerActivityStats(
         ? row.lastQualifiedAt.toISOString()
         : null,
       activeThreeDayCycles: row.activeThreeDayCycles,
+      activeDaysCount: Math.max(1, row.activeDaysCount || 1),
       totalVisitsCount: row.totalVisitsCount,
       accountAgeDays,
       nextPostDeadlineAt: deadline.toISOString(),

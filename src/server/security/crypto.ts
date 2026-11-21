@@ -110,3 +110,43 @@ export function generatePkceVerifier(): string {
 export function computePkceChallenge(verifier: string): string {
   return crypto.createHash("sha256").update(verifier, "utf8").digest("base64url");
 }
+
+const PASSWORD_SCRYPT_PARAMS = { N: 16384, r: 8, p: 1 };
+const PASSWORD_KEY_LEN = 64;
+
+/**
+ * Hashes a user password with a per-user random 16-byte salt using memory-hard scrypt.
+ * Format: scrypt$<saltHex>$<derivedKeyHex>
+ */
+export function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const derived = crypto
+    .scryptSync(password, salt, PASSWORD_KEY_LEN, PASSWORD_SCRYPT_PARAMS)
+    .toString("hex");
+  return `scrypt$${salt}$${derived}`;
+}
+
+/**
+ * Constant-time verification of a password against a stored scrypt hash.
+ */
+export function verifyPassword(password: string, storedHash: string): boolean {
+  const parts = storedHash.split("$");
+  if (parts.length !== 3 || parts[0] !== "scrypt") {
+    return false;
+  }
+  const [, salt, expectedHex] = parts;
+  if (!salt || !expectedHex || !/^[0-9a-f]+$/i.test(expectedHex)) {
+    return false;
+  }
+  const expectedBuf = Buffer.from(expectedHex, "hex");
+  const derivedBuf = crypto.scryptSync(
+    password,
+    salt,
+    expectedBuf.length,
+    PASSWORD_SCRYPT_PARAMS
+  );
+  if (derivedBuf.length !== expectedBuf.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(derivedBuf, expectedBuf);
+}

@@ -14,6 +14,7 @@ import {
   users,
 } from "@/server/db/schema";
 import { isValidUsernameFormat } from "@/lib/validation/account";
+import { hashPassword, verifyPassword } from "@/server/security/crypto";
 import { AUDIT_EVENTS, writeAuditLog } from "@/server/services/audit.service";
 import { createUserSession } from "./session";
 
@@ -40,6 +41,20 @@ export class AccountAccessError extends Error {
   ) {
     super(message);
     this.name = "AccountAccessError";
+  }
+}
+
+export class PasswordAuthError extends Error {
+  constructor(
+    public readonly code:
+      | "INVALID_CREDENTIALS"
+      | "USERNAME_TAKEN"
+      | "USERNAME_RESERVED",
+    message: string,
+    public readonly statusCode: 400 | 401 | 409 = 401
+  ) {
+    super(message);
+    this.name = "PasswordAuthError";
   }
 }
 
@@ -118,6 +133,7 @@ export interface LoginSuccessResult {
   userId: string;
   role: UserRole;
   isNewUser: boolean;
+  needsOnboarding: boolean;
   sessionId: string;
   sessionToken: string;
   expiresAt: Date;
@@ -151,6 +167,8 @@ export async function loginOrRegisterWithGoogle(params: {
         role: users.role,
         status: users.status,
         suspendedUntil: users.suspendedUntil,
+        passwordHash: users.passwordHash,
+        onboardingCompleted: users.onboardingCompleted,
       })
       .from(authIdentities)
       .innerJoin(users, eq(authIdentities.userId, users.id))
@@ -165,11 +183,14 @@ export async function loginOrRegisterWithGoogle(params: {
     let userId: string;
     let role: UserRole;
     let isNewUser = false;
+    let needsOnboarding = false;
 
     if (existing[0]) {
       assertAccountActive(existing[0].status, existing[0].suspendedUntil);
       userId = existing[0].userId;
       role = existing[0].role;
+      needsOnboarding =
+        !existing[0].onboardingCompleted || !existing[0].passwordHash;
 
       await tx
         .update(authIdentities)
@@ -214,6 +235,7 @@ export async function loginOrRegisterWithGoogle(params: {
       userId = newUser.id;
       role = newUser.role;
       isNewUser = true;
+      needsOnboarding = true;
 
       const preferredUsername = normalizedEmail.split("@")[0] || "user";
       const username = await allocateUniqueUsername(tx, preferredUsername);
@@ -270,6 +292,7 @@ export async function loginOrRegisterWithGoogle(params: {
       userId,
       role,
       isNewUser,
+      needsOnboarding,
       ...session,
     };
   });
@@ -300,6 +323,8 @@ export async function loginOrRegisterWithTelegram(params: {
         role: users.role,
         status: users.status,
         suspendedUntil: users.suspendedUntil,
+        passwordHash: users.passwordHash,
+        onboardingCompleted: users.onboardingCompleted,
       })
       .from(authIdentities)
       .innerJoin(users, eq(authIdentities.userId, users.id))
@@ -314,11 +339,14 @@ export async function loginOrRegisterWithTelegram(params: {
     let userId: string;
     let role: UserRole;
     let isNewUser = false;
+    let needsOnboarding = false;
 
     if (existing[0]) {
       assertAccountActive(existing[0].status, existing[0].suspendedUntil);
       userId = existing[0].userId;
       role = existing[0].role;
+      needsOnboarding =
+        !existing[0].onboardingCompleted || !existing[0].passwordHash;
 
       await tx
         .update(authIdentities)
@@ -343,6 +371,7 @@ export async function loginOrRegisterWithTelegram(params: {
       userId = newUser.id;
       role = newUser.role;
       isNewUser = true;
+      needsOnboarding = true;
 
       const username = await allocateUniqueUsername(
         tx,
@@ -405,6 +434,182 @@ export async function loginOrRegisterWithTelegram(params: {
       userId,
       role,
       isNewUser,
+      needsOnboarding,
+      ...session,
+    };
+  });
+}
+
+/**
+ * Completes post-login onboarding: lets the authenticated user choose their
+ * permanent username, display name, bio, and password for future username+password login.
+ */
+export async function completeAccountSetup(params: {
+  userId: string;
+  role: UserRole;
+  username: string;
+  displayName: string;
+  password: string;
+  bio?: string;
+  ipAddress?: string | null;
+  requestId?: string | null;
+}): Promise<{ username: string; displayName: string; bio: string }> {
+  const normalizedUsername = params.username.trim().toLowerCase();
+
+  if (RESERVED_USERNAMES.has(normalizedUsername)) {
+    throw new PasswordAuthError(
+      "USERNAME_RESERVED",
+      "Bu username band qilingan, boshqasini tanlang",
+      400
+    );
+  }
+
+  return withDbContext(
+    { userId: params.userId, role: params.role, authFlow: true },
+    async (tx) => {
+      const collision = await tx
+        .select({ userId: profiles.userId })
+        .from(profiles)
+        .where(sql`lower(${profiles.username}) = ${normalizedUsername}`)
+        .limit(1);
+
+      if (collision[0] && collision[0].userId !== params.userId) {
+        throw new PasswordAuthError(
+          "USERNAME_TAKEN",
+          "Bu username allaqachon band, boshqasini tanlang",
+          409
+        );
+      }
+
+      const now = new Date();
+      const hashed = hashPassword(params.password);
+      const safeBio = (params.bio ?? "").trim().slice(0, 150);
+
+      await tx
+        .update(users)
+        .set({
+          passwordHash: hashed,
+          onboardingCompleted: true,
+          updatedAt: now,
+        })
+        .where(eq(users.id, params.userId));
+
+      await tx
+        .update(profiles)
+        .set({
+          username: normalizedUsername,
+          displayName: params.displayName.trim().slice(0, 40),
+          bio: safeBio,
+          updatedAt: now,
+        })
+        .where(eq(profiles.userId, params.userId));
+
+      await writeAuditLog(tx, {
+        actorId: params.userId,
+        actorRole: params.role,
+        eventType: AUDIT_EVENTS.PROFILE_UPDATED,
+        targetType: "user",
+        targetId: params.userId,
+        ipAddress: params.ipAddress,
+        requestId: params.requestId,
+        metadata: { action: "complete_setup", username: normalizedUsername },
+      });
+
+      return {
+        username: normalizedUsername,
+        displayName: params.displayName.trim().slice(0, 40),
+        bio: safeBio,
+      };
+    }
+  );
+}
+
+/**
+ * Authenticates an existing user using their chosen username + password.
+ */
+export async function loginWithUsernamePassword(params: {
+  username: string;
+  password: string;
+  authChannel?: AuthChannel;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  requestId?: string | null;
+}): Promise<LoginSuccessResult> {
+  const normalizedUsername = params.username
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
+
+  return withDbContext({ authFlow: true }, async (tx) => {
+    const found = await tx
+      .select({
+        userId: users.id,
+        role: users.role,
+        status: users.status,
+        suspendedUntil: users.suspendedUntil,
+        passwordHash: users.passwordHash,
+        onboardingCompleted: users.onboardingCompleted,
+      })
+      .from(profiles)
+      .innerJoin(users, eq(profiles.userId, users.id))
+      .where(sql`lower(${profiles.username}) = ${normalizedUsername}`)
+      .limit(1);
+
+    const record = found[0];
+    if (
+      !record ||
+      !record.passwordHash ||
+      !verifyPassword(params.password, record.passwordHash)
+    ) {
+      await writeAuditLog(tx, {
+        actorRole: "anonymous",
+        eventType: AUDIT_EVENTS.AUTH_LOGIN_FAILED,
+        targetType: "auth_identity",
+        targetId: normalizedUsername || "unknown",
+        ipAddress: params.ipAddress,
+        requestId: params.requestId,
+        metadata: { method: "password" },
+      });
+
+      throw new PasswordAuthError(
+        "INVALID_CREDENTIALS",
+        "Username yoki parol noto‘g‘ri",
+        401
+      );
+    }
+
+    assertAccountActive(record.status, record.suspendedUntil);
+
+    const [identityRow] = await tx
+      .select({ provider: authIdentities.provider })
+      .from(authIdentities)
+      .where(eq(authIdentities.userId, record.userId))
+      .limit(1);
+
+    const session = await createUserSession(tx, {
+      userId: record.userId,
+      authChannel: params.authChannel ?? "web_cookie",
+      provider: identityRow?.provider ?? "google",
+      ipAddress: params.ipAddress,
+      userAgent: params.userAgent,
+    });
+
+    await writeAuditLog(tx, {
+      actorId: record.userId,
+      actorRole: record.role,
+      eventType: AUDIT_EVENTS.AUTH_LOGIN_GOOGLE,
+      targetType: "session",
+      targetId: session.sessionId,
+      ipAddress: params.ipAddress,
+      requestId: params.requestId,
+      metadata: { method: "password" },
+    });
+
+    return {
+      userId: record.userId,
+      role: record.role,
+      isNewUser: false,
+      needsOnboarding: !record.onboardingCompleted,
       ...session,
     };
   });

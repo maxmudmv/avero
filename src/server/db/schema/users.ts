@@ -33,6 +33,8 @@ export const users = pgTable(
     status: userStatusEnum("status").notNull().default("active"),
     primaryEmail: varchar("primary_email", { length: 255 }),
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+    passwordHash: varchar("password_hash", { length: 255 }),
+    onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
     maxPostLength: integer("max_post_length").notNull().default(1000),
     suspendedUntil: timestamp("suspended_until", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -135,20 +137,13 @@ export const userActivity = pgTable("user_activity", {
   activeThreeDayCycles: integer("active_three_day_cycles")
     .notNull()
     .default(0),
+  activeDaysCount: integer("active_days_count").notNull().default(1),
+  lastActiveDay: varchar("last_active_day", { length: 10 }),
   totalVisitsCount: integer("total_visits_count").notNull().default(1),
   unlockedAvatars: jsonb("unlocked_avatars")
     .$type<string[]>()
     .notNull()
-    .default([
-      "av_01",
-      "av_02",
-      "av_03",
-      "av_04",
-      "av_05",
-      "av_06",
-      "av_07",
-      "av_08",
-    ]),
+    .default(["av_01"]),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

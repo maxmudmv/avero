@@ -116,3 +116,35 @@ export const assignRoleSchema = z.object({
     .pipe(z.string().min(5, "Kamida 5 belgi sabab kiriting").max(300))
     .optional(),
 });
+
+export const passwordSchema = z
+  .string()
+  .min(6, "Parol kamida 6 ta belgidan iborat bo‘lishi kerak")
+  .max(72, "Parol maksimum 72 ta belgi bo‘lishi mumkin");
+
+export const completeAccountSetupSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/^@+/, "").toLowerCase())
+    .pipe(usernameSchema),
+  displayName: z
+    .string()
+    .transform(sanitizePlainText)
+    .pipe(z.string().min(1, "Ism bo‘sh bo‘lmasin").max(40, "Ism maksimum 40 belgi")),
+  password: passwordSchema,
+  bio: z
+    .string()
+    .transform(sanitizePlainText)
+    .pipe(z.string().max(150, "Bio maksimum 150 belgi"))
+    .optional(),
+});
+
+export const passwordLoginSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/^@+/, "").toLowerCase())
+    .pipe(z.string().min(1, "Username kiriting").max(30)),
+  password: z.string().min(1, "Parol kiriting").max(72),
+});

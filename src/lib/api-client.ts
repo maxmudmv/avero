@@ -37,6 +37,8 @@ export interface AuthMeData {
     suspendedUntil?: string | null;
     primaryEmail: string | null;
     emailVerifiedAt: string | null;
+    hasPassword?: boolean;
+    onboardingCompleted?: boolean;
     createdAt: string;
   } | null;
   effectivePermissions?: string[];
@@ -300,6 +302,7 @@ export interface OwnerActivityResponse {
   lastPostAt: string | null;
   lastQualifiedAt: string | null;
   activeThreeDayCycles: number;
+  activeDaysCount?: number;
   totalVisitsCount: number;
   accountAgeDays: number;
   nextPostDeadlineAt: string;
@@ -398,6 +401,35 @@ export const apiClient = {
     ),
 
   getMe: () => apiFetch<AuthMeData>("/api/v1/auth/me"),
+
+  loginWithPassword: (username: string, password: string) =>
+    apiFetch<{
+      sessionToken: string;
+      expiresAt: string;
+      userId: string;
+      role: UserRoleType;
+      needsOnboarding: boolean;
+    }>("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    }),
+
+  completeAccountSetup: (payload: {
+    username: string;
+    displayName: string;
+    password: string;
+    bio?: string;
+  }) =>
+    apiFetch<{
+      username: string;
+      displayName: string;
+      bio: string;
+      onboardingCompleted: boolean;
+      hasPassword: boolean;
+    }>("/api/v1/auth/complete-setup", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 
   loginWithTelegram: (initData: string) =>
     apiFetch<{

@@ -4,16 +4,21 @@ import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { eq } from "drizzle-orm";
 import { getServerEnv } from "@/lib/env";
 import {
+  completeAccountSetupSchema,
   confirmTelegramLinkSchema,
   emailVerificationConfirmSchema,
   emailVerificationRequestSchema,
   initLinkSchema,
+  passwordLoginSchema,
   telegramInitDataSchema,
 } from "@/lib/validation/account";
 import {
   AccountAccessError,
+  completeAccountSetup,
   loginOrRegisterWithGoogle,
   loginOrRegisterWithTelegram,
+  loginWithUsernamePassword,
+  PasswordAuthError,
 } from "@/server/auth/account";
 import {
   createEmailVerificationRequest,
@@ -242,7 +247,10 @@ authRoutes.get(
       if (!wantsJson) {
         const successTarget = new URL(requestOrigin);
         successTarget.pathname = "/";
-        successTarget.searchParams.set("auth", "success");
+        successTarget.searchParams.set(
+          "auth",
+          result.needsOnboarding ? "setup" : "success"
+        );
         return c.redirect(successTarget.toString(), 302);
       }
 
@@ -397,6 +405,148 @@ authRoutes.post(
   }
 );
 
+// 2b. Username + Password Login
+authRoutes.post(
+  "/auth/login",
+  rateLimitMiddleware(RATE_LIMIT_RULES.AUTH_FLOW),
+  async (c) => {
+    const env = getServerEnv();
+    const rawBody = await c.req.json().catch(() => null);
+    const parsed = passwordLoginSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return c.json(
+        {
+          ok: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message:
+              parsed.error.issues[0]?.message ??
+              "Username va parolni to‘g‘ri kiriting",
+          },
+          meta: { requestId: c.get("requestId") },
+        },
+        400
+      );
+    }
+
+    try {
+      const result = await loginWithUsernamePassword({
+        username: parsed.data.username,
+        password: parsed.data.password,
+        authChannel: "web_cookie",
+        ipAddress: c.get("ipAddress"),
+        userAgent: c.req.header("user-agent"),
+        requestId: c.get("requestId"),
+      });
+
+      c.header(
+        "Set-Cookie",
+        buildSessionCookieHeader(
+          result.sessionToken,
+          result.expiresAt,
+          env.NODE_ENV === "production"
+        )
+      );
+
+      return c.json({
+        ok: true,
+        data: {
+          sessionToken: result.sessionToken,
+          expiresAt: result.expiresAt.toISOString(),
+          userId: result.userId,
+          role: result.role,
+          needsOnboarding: result.needsOnboarding,
+        },
+        meta: { requestId: c.get("requestId") },
+      });
+    } catch (err) {
+      if (err instanceof PasswordAuthError) {
+        return c.json(
+          {
+            ok: false,
+            error: { code: err.code, message: err.message },
+            meta: { requestId: c.get("requestId") },
+          },
+          err.statusCode
+        );
+      }
+      if (err instanceof AccountAccessError) {
+        return c.json(
+          {
+            ok: false,
+            error: { code: err.code, message: err.message },
+            meta: { requestId: c.get("requestId") },
+          },
+          403
+        );
+      }
+      throw err;
+    }
+  }
+);
+
+// 2c. Complete Post-Google / Initial Account Setup (Username + Password + Display Name + Bio)
+authRoutes.post(
+  "/auth/complete-setup",
+  requireAuth,
+  rateLimitMiddleware(RATE_LIMIT_RULES.AUTH_FLOW),
+  async (c) => {
+    const actor = c.get("actor")!;
+    const rawBody = await c.req.json().catch(() => null);
+    const parsed = completeAccountSetupSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return c.json(
+        {
+          ok: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message:
+              parsed.error.issues[0]?.message ??
+              "Ma’lumotlarni to‘g‘ri kiriting",
+          },
+          meta: { requestId: c.get("requestId") },
+        },
+        400
+      );
+    }
+
+    try {
+      const updated = await completeAccountSetup({
+        userId: actor.userId,
+        role: actor.role,
+        username: parsed.data.username,
+        displayName: parsed.data.displayName,
+        password: parsed.data.password,
+        bio: parsed.data.bio,
+        ipAddress: c.get("ipAddress"),
+        requestId: c.get("requestId"),
+      });
+
+      return c.json({
+        ok: true,
+        data: {
+          ...updated,
+          onboardingCompleted: true,
+          hasPassword: true,
+        },
+        meta: { requestId: c.get("requestId") },
+      });
+    } catch (err) {
+      if (err instanceof PasswordAuthError) {
+        return c.json(
+          {
+            ok: false,
+            error: { code: err.code, message: err.message },
+            meta: { requestId: c.get("requestId") },
+          },
+          err.statusCode
+        );
+      }
+      throw err;
+    }
+  }
+);
+
 // 3. Current Authenticated User
 authRoutes.get("/auth/me", requireAuth, async (c) => {
   const actor = c.get("actor")!;
@@ -414,6 +564,8 @@ authRoutes.get("/auth/me", requireAuth, async (c) => {
           suspendedUntil: users.suspendedUntil,
           primaryEmail: users.primaryEmail,
           emailVerifiedAt: users.emailVerifiedAt,
+          passwordHash: users.passwordHash,
+          onboardingCompleted: users.onboardingCompleted,
           createdAt: users.createdAt,
         })
         .from(users)
@@ -467,7 +619,19 @@ authRoutes.get("/auth/me", requireAuth, async (c) => {
         : [];
 
       return {
-        user: userRow ?? null,
+        user: userRow
+          ? {
+              id: userRow.id,
+              role: userRow.role,
+              status: userRow.status,
+              suspendedUntil: userRow.suspendedUntil,
+              primaryEmail: userRow.primaryEmail,
+              emailVerifiedAt: userRow.emailVerifiedAt,
+              hasPassword: Boolean(userRow.passwordHash),
+              onboardingCompleted: Boolean(userRow.onboardingCompleted),
+              createdAt: userRow.createdAt,
+            }
+          : null,
         effectivePermissions,
         profile: profileRow ?? null,
         settings: settingsRow ?? null,

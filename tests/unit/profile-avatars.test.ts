@@ -47,7 +47,7 @@ describe("Profile Validation & 30-Avatar Catalog", () => {
     ).toBe(false);
   });
 
-  it("contains 30 mixed-style avatars and unlocks progressively by time + 3-day activity", () => {
+  it("contains 30 mixed-style avatars and unlocks strictly 1 per active day", () => {
     expect(AVATAR_CATALOG).toHaveLength(30);
     expect(
       AVATAR_CATALOG.filter((a) => a.category === "illustration")
@@ -58,26 +58,42 @@ describe("Profile Validation & 30-Avatar Catalog", () => {
     expect(
       AVATAR_CATALOG.filter((a) => a.category === "minimal")
     ).toHaveLength(10);
-    expect(STARTER_AVATAR_IDS.length).toBe(8);
+    expect(STARTER_AVATAR_IDS).toEqual(["av_01"]);
 
-    const dayZero = computeUnlockedAvatarIds({
+    const dayOne = computeUnlockedAvatarIds({
       previouslyUnlocked: [],
+      activeDaysCount: 1,
       accountAgeDays: 0,
       activeThreeDayCycles: 0,
       postsCount: 0,
     });
-    expect(dayZero).toEqual(STARTER_AVATAR_IDS);
+    expect(dayOne).toEqual(["av_01"]);
 
-    const dayThreeActive = computeUnlockedAvatarIds({
-      previouslyUnlocked: dayZero,
-      accountAgeDays: 3,
+    const dayTwo = computeUnlockedAvatarIds({
+      previouslyUnlocked: dayOne,
+      activeDaysCount: 2,
+      accountAgeDays: 1,
+      activeThreeDayCycles: 0,
+      postsCount: 0,
+    });
+    expect(dayTwo).toEqual(["av_01", "av_02"]);
+
+    const dayFive = computeUnlockedAvatarIds({
+      previouslyUnlocked: dayTwo,
+      activeDaysCount: 5,
+      accountAgeDays: 5,
       activeThreeDayCycles: 1,
       postsCount: 2,
     });
-    expect(dayThreeActive).toContain("av_04");
-    expect(dayThreeActive).toContain("av_05");
-    expect(dayThreeActive).toContain("av_13");
-    expect(dayThreeActive).toContain("av_24");
-    expect(dayThreeActive.length).toBeGreaterThan(STARTER_AVATAR_IDS.length);
+    expect(dayFive).toEqual(["av_01", "av_02", "av_03", "av_04", "av_05"]);
+
+    const dayThirty = computeUnlockedAvatarIds({
+      previouslyUnlocked: dayFive,
+      activeDaysCount: 30,
+      accountAgeDays: 30,
+      activeThreeDayCycles: 8,
+      postsCount: 10,
+    });
+    expect(dayThirty).toHaveLength(30);
   });
 });

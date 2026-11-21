@@ -85,6 +85,13 @@
       "when": 1795216760000,
       "tag": "0011_telegram_replay_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795257600000,
+      "tag": "0012_daily_avatars_and_password_auth",
+      "breakpoints": true
     }
   ]
 }

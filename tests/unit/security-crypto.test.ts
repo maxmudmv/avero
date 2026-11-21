@@ -8,9 +8,11 @@ import {
 import {
   computePkceChallenge,
   generatePkceVerifier,
+  hashPassword,
   sha256Hex,
   signPayload,
   timingSafeEqualHex,
+  verifyPassword,
   verifySignedPayload,
 } from "@/server/security/crypto";
 import {
@@ -142,5 +144,15 @@ describe("Security Crypto & Telegram initData Verification", () => {
     expect(r2.allowed).toBe(true);
     expect(r3.allowed).toBe(false);
     expect(r3.retryAfterSeconds).toBeGreaterThanOrEqual(1);
+  });
+
+  it("hashes and verifies passwords with per-user scrypt salt", () => {
+    const h1 = hashPassword("AveroSecret123!");
+    const h2 = hashPassword("AveroSecret123!");
+    expect(h1).not.toBe(h2);
+    expect(h1.startsWith("scrypt$")).toBe(true);
+    expect(verifyPassword("AveroSecret123!", h1)).toBe(true);
+    expect(verifyPassword("WrongPassword", h1)).toBe(false);
+    expect(verifyPassword("AveroSecret123!", "invalid-hash")).toBe(false);
   });
 });

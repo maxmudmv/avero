@@ -5,6 +5,7 @@ export interface AvatarCatalogItem {
   name: string;
   category: AvatarCategory;
   starterUnlocked: boolean;
+  minActiveDays?: number;
   minAccountDays: number;
   minActiveCycles: number;
   minPostsCount: number;
@@ -15,7 +16,7 @@ export interface AvatarCatalogItem {
   glyphVariant: number;
 }
 
-export const AVATAR_CATALOG: AvatarCatalogItem[] = [
+const RAW_AVATAR_CATALOG: AvatarCatalogItem[] = [
   // --- 10 Illustration ---
   {
     id: "av_01",
@@ -443,6 +444,29 @@ export const AVATAR_CATALOG: AvatarCatalogItem[] = [
   },
 ];
 
+/**
+ * Daily Active Unlock Progression:
+ * Day 1 (active day #1) -> av_01 unlocked.
+ * Each subsequent distinct active day unlocks exactly +1 avatar (av_02 .. av_30).
+ */
+export const AVATAR_CATALOG: AvatarCatalogItem[] = RAW_AVATAR_CATALOG.map(
+  (item, idx) => {
+    const dayNum = idx + 1;
+    return {
+      ...item,
+      starterUnlocked: dayNum === 1,
+      minActiveDays: dayNum,
+      minAccountDays: idx,
+      minActiveCycles: 0,
+      minPostsCount: 0,
+      unlockRequirementText:
+        dayNum === 1
+          ? "1-faol kun (boshidan ochiq)"
+          : `${dayNum}-faol kunda ochiladi`,
+    };
+  }
+);
+
 export const STARTER_AVATAR_IDS = AVATAR_CATALOG.filter(
   (a) => a.starterUnlocked
 ).map((a) => a.id);
@@ -458,26 +482,30 @@ export function isValidAvatarId(avatarId: string): boolean {
 }
 
 /**
- * Computes which avatars are newly unlocked based purely on account age +
- * 3-day active cadence + posts count (no XP, levels, or missions).
+ * Computes which avatars are unlocked: strictly 1 new avatar per distinct active day
+ * (Day 1 => av_01, Day 2 => av_01..av_02, ..., Day 30 => all 30).
+ * Previously unlocked avatars are never revoked.
  */
 export function computeUnlockedAvatarIds(params: {
   previouslyUnlocked: string[];
+  activeDaysCount?: number;
   accountAgeDays: number;
   activeThreeDayCycles: number;
   postsCount: number;
 }): string[] {
+  const effectiveActiveDays = Math.min(
+    AVATAR_CATALOG.length,
+    Math.max(1, params.activeDaysCount ?? params.accountAgeDays + 1)
+  );
+
   const unlocked = new Set<string>([
     ...STARTER_AVATAR_IDS,
     ...params.previouslyUnlocked.filter(isValidAvatarId),
   ]);
 
-  for (const item of AVATAR_CATALOG) {
-    if (
-      params.accountAgeDays >= item.minAccountDays &&
-      params.activeThreeDayCycles >= item.minActiveCycles &&
-      params.postsCount >= item.minPostsCount
-    ) {
+  for (let i = 0; i < effectiveActiveDays; i++) {
+    const item = AVATAR_CATALOG[i];
+    if (item) {
       unlocked.add(item.id);
     }
   }

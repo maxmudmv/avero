@@ -13,15 +13,14 @@ import {
   Lock,
   MessageSquare,
   Plus,
-  Sparkles,
   Trash2,
   UserCheck,
   UserPlus,
   X,
 } from "lucide-react";
+import { VerifiedMark } from "@/components/app/verified-mark";
 import {
   GlassAvatar,
-  GlassBadge,
   GlassButton,
   GlassCard,
   GlassInput,
@@ -305,24 +304,19 @@ export function ProfileView({
               size="xl"
             />
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <h1
                   style={{ fontFamily: "var(--font-display)" }}
                   className="text-[20px] font-bold tracking-[-0.02em] text-[var(--text-primary)]"
                 >
                   {profile.displayName}
                 </h1>
-                {profile.badges.map((b) => (
-                  <GlassBadge key={b.id} variant={b.tone}>
-                    {b.label}
-                  </GlassBadge>
-                ))}
-              </div>
-              <p className="font-mono text-[13px] text-[var(--text-muted)]">
-                @{profile.username}
-                {profile.online ? (
-                  <span className="ml-2 text-emerald-400">● Onlayn</span>
+                {profile.badges.some((b) => b.id === "verified") ? (
+                  <VerifiedMark size={15} />
                 ) : null}
+              </div>
+              <p className="text-[13.5px] text-[var(--text-muted)]">
+                @{profile.username}
               </p>
 
               {profile.bio ? (
@@ -429,71 +423,60 @@ export function ProfileView({
         {/* Stats Row */}
         <div className="mt-5 flex flex-wrap items-center gap-6 border-t border-[var(--border-matte)] pt-4 text-[13.5px]">
           <div>
-            <span className="font-mono font-semibold text-[var(--text-primary)]">
+            <span className="font-semibold text-[var(--text-primary)]">
               {profile.postsCount}
             </span>{" "}
-            <span className="text-[var(--text-muted)]">Post</span>
+            <span className="text-[var(--text-muted)]">{t.profile.posts}</span>
           </div>
           <div>
-            <span className="font-mono font-semibold text-[var(--text-primary)]">
+            <span className="font-semibold text-[var(--text-primary)]">
               {followersCount}
             </span>{" "}
             <span className="text-[var(--text-muted)]">Followers</span>
           </div>
           <div>
-            <span className="font-mono font-semibold text-[var(--text-primary)]">
+            <span className="font-semibold text-[var(--text-primary)]">
               {profile.followingCount}
             </span>{" "}
             <span className="text-[var(--text-muted)]">Following</span>
           </div>
-          {isOwner && activity ? (
-            <div>
-              <span className="font-mono font-semibold text-[var(--text-primary)]">
-                {activity.unlockedAvatars.length}/30
-              </span>{" "}
-              <span className="text-[var(--text-muted)]">Ochilgan avatarlar</span>
-            </div>
-          ) : null}
         </div>
       </GlassCard>
 
       {/* Owner-Only Daily Activity & Avatar Unlock Card (Strictly hidden from other users) */}
       {isOwner && activity ? (
-        <GlassCard padding="md" className="space-y-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--text-primary)]">
-              <Sparkles className="h-4 w-4 text-sky-400" />
+        <GlassCard padding="md" className="space-y-3">
+          <div>
+            <h2 className="text-[14px] font-semibold text-[var(--text-primary)]">
               {t.profile.dailyActivityTitle}
-            </span>
-            <GlassBadge variant="success">
-              {t.profile.activeDayBadge(activity.activeDaysCount ?? 1)}
-            </GlassBadge>
+            </h2>
+            <p className="mt-0.5 text-[12.5px] text-[var(--text-muted)]">
+              {t.profile.dailyActivityDesc}
+            </p>
           </div>
-          <p className="text-[12.5px] text-[var(--text-secondary)]">
-            {t.profile.dailyActivityDesc}
-          </p>
           <div className="grid grid-cols-3 divide-x divide-[var(--border-matte)] border-t border-[var(--border-matte)] pt-3 text-center">
             <div className="px-2">
-              <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
-                {activity.activeDaysCount ?? 1} {t.profile.daysUnit}
+              <div className="text-[16px] font-semibold text-[var(--text-primary)]">
+                {activity.activeDaysCount ?? 1}
               </div>
-              <div className="text-[11px] text-[var(--text-muted)]">
+              <div className="text-[11.5px] text-[var(--text-muted)]">
                 {t.profile.activeDaysLabel}
               </div>
             </div>
             <div className="px-2">
-              <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
-                {activity.accountAgeDays} {t.profile.daysUnit}
+              <div className="text-[16px] font-semibold text-[var(--text-primary)]">
+                {activity.accountAgeDays}
               </div>
-              <div className="text-[11px] text-[var(--text-muted)]">
+              <div className="text-[11.5px] text-[var(--text-muted)]">
                 {t.profile.profileAgeLabel}
               </div>
             </div>
             <div className="px-2">
-              <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
-                {activity.unlockedAvatars.length}/30
+              <div className="text-[16px] font-semibold text-[var(--text-primary)]">
+                {activity.unlockedAvatars.length}
+                <span className="text-[var(--text-muted)]">/30</span>
               </div>
-              <div className="text-[11px] text-[var(--text-muted)]">
+              <div className="text-[11.5px] text-[var(--text-muted)]">
                 {t.profile.avatarsLabel}
               </div>
             </div>

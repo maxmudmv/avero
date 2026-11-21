@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Ban, Bell, Check, Link2, LogOut, Scale, Send, Shield } from "lucide-react";
+import { Ban, Bell, Check, Link2, LogOut, Scale, Send } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import {
@@ -502,8 +502,7 @@ export default function SettingsPage() {
             <h2 style={{ fontFamily: "var(--font-display)" }} className={sectionTitle}>
               {t.settings.accountTitle}
             </h2>
-            <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-muted)]">
-              <Shield className="h-3 w-3" />
+            <span className="text-[12px] text-[var(--text-muted)]">
               {auth?.user ? t.settings.activeSession : t.settings.guest}
             </span>
           </div>

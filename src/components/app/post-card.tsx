@@ -14,10 +14,10 @@ import {
   MoreHorizontal,
   Repeat2,
   Send,
-  ShieldCheck,
   Trash2,
   X,
 } from "lucide-react";
+import { VerifiedMark } from "@/components/app/verified-mark";
 import {
   GlassAvatar,
   GlassButton,
@@ -470,16 +470,11 @@ export const PostCard = React.memo(function PostCard({
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <Link
                   href={`/u/${encodeURIComponent(post.authorUsername)}`}
-                  className="truncate font-mono text-[13.5px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] hover:underline"
+                  className="truncate text-[14px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] hover:underline"
                 >
                   @{post.authorUsername}
                 </Link>
-                {post.authorVerified ? (
-                  <ShieldCheck
-                    aria-label="Tasdiqlangan"
-                    className="h-3.5 w-3.5 shrink-0 text-sky-400"
-                  />
-                ) : null}
+                {post.authorVerified ? <VerifiedMark size={13} /> : null}
                 <span className="text-[12px] text-[var(--text-muted)]">·</span>
                 <span className="text-[12px] text-[var(--text-muted)]">
                   {formatRelativeTime(post.createdAt)}

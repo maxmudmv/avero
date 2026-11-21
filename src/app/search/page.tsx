@@ -2,7 +2,8 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search as SearchIcon, ShieldCheck, UserPlus, X } from "lucide-react";
+import { Search as SearchIcon, UserPlus, X } from "lucide-react";
+import { VerifiedMark } from "@/components/app/verified-mark";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import { PostCard } from "@/components/app/post-card";
@@ -269,12 +270,10 @@ function SearchContent() {
                     />
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[14px] font-semibold text-[var(--text-primary)] hover:underline">
+                        <span className="text-[14px] font-semibold text-[var(--text-primary)] hover:underline">
                           @{u.username}
                         </span>
-                        {u.verified ? (
-                          <ShieldCheck className="h-3.5 w-3.5 text-sky-400" />
-                        ) : null}
+                        {u.verified ? <VerifiedMark size={13} /> : null}
                       </div>
                       <p className="text-[12px] text-[var(--text-muted)]">
                         {u.displayName} · {u.postsCount} {t.profile.posts.toLowerCase()}

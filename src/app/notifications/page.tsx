@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { CheckCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCheck, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
-import { useAppState } from "@/components/app/app-state-provider";
+import {
+  useAppState,
+  type NotificationItem,
+} from "@/components/app/app-state-provider";
 import {
   GlassAvatar,
-  GlassBadge,
   GlassButton,
   GlassCard,
   GlassTab,
@@ -15,7 +17,35 @@ import {
   useDesignSystem,
 } from "@/design-system";
 
+function resolveNotificationHref(item: NotificationItem): string {
+  if (item.postId) {
+    return `/p/${encodeURIComponent(item.postId)}`;
+  }
+  switch (item.type) {
+    case "dm":
+    case "dm_request":
+      return item.actorId
+        ? `/messages?to=${encodeURIComponent(item.actorId)}&username=${encodeURIComponent(item.actorUsername)}&name=${encodeURIComponent(item.actorName)}`
+        : "/messages";
+    case "follow":
+      return item.actorUsername && item.actorUsername !== "system"
+        ? `/u/${encodeURIComponent(item.actorUsername)}`
+        : "/profile";
+    case "follow_request":
+    case "avatar_unlocked":
+      return "/profile";
+    case "warning":
+    case "appeal":
+      return "/settings";
+    default:
+      return item.actorUsername && item.actorUsername !== "system"
+        ? `/u/${encodeURIComponent(item.actorUsername)}`
+        : "/";
+  }
+}
+
 export default function NotificationsPage() {
+  const router = useRouter();
   const { toast } = useDesignSystem();
   const {
     notifications,
@@ -32,6 +62,13 @@ export default function NotificationsPage() {
   const visible =
     filter === "unread" ? notifications.filter((n) => !n.read) : notifications;
 
+  const handleOpenNotification = (item: NotificationItem) => {
+    if (!item.read) {
+      markAllNotificationsRead();
+    }
+    router.push(resolveNotificationHref(item));
+  };
+
   return (
     <AppShell
       title="Bildirishnomalar"
@@ -39,7 +76,7 @@ export default function NotificationsPage() {
         unreadCount > 0 ? (
           <GlassButton
             size="sm"
-            variant="subtle"
+            variant="glass"
             onClick={() => {
               markAllNotificationsRead();
               toast({
@@ -72,45 +109,58 @@ export default function NotificationsPage() {
             </p>
           </GlassCard>
         ) : (
-          <GlassCard padding="md" className="divide-y divide-[var(--border-matte)]">
+          <GlassCard
+            padding="none"
+            className="divide-y divide-[var(--border-matte)] overflow-hidden"
+          >
             {visible.map((item) => (
-              <div
+              <button
                 key={item.id}
-                className="flex items-start gap-3 py-3 first:pt-0.5 last:pb-0.5"
+                type="button"
+                onClick={() => handleOpenNotification(item)}
+                className="glass-focus-ring flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[var(--glass-fill-subtle)] cursor-pointer"
               >
-                <GlassAvatar
-                  name={item.actorName}
-                  seed={item.actorUsername}
-                  size="sm"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <Link
-                      href={
-                        item.actorUsername !== "system"
-                          ? `/u/${encodeURIComponent(item.actorUsername)}`
-                          : "/"
-                      }
-                      className="font-mono text-[13.5px] font-semibold text-[var(--text-primary)] hover:underline"
-                    >
-                      {item.actorUsername !== "system"
-                        ? `@${item.actorUsername}`
-                        : item.actorName}
-                    </Link>
-                    <div className="flex items-center gap-1.5">
-                      {!item.read ? (
-                        <GlassBadge variant="accent">Yangi</GlassBadge>
-                      ) : null}
-                      <span className="text-[11.5px] text-[var(--text-muted)]">
-                        {item.timeLabel}
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <GlassAvatar
+                    name={item.actorName}
+                    seed={item.actorUsername}
+                    avatarId={item.actorAvatarId}
+                    size="sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-[14px] font-semibold text-[var(--text-primary)]">
+                        {item.actorUsername !== "system"
+                          ? `@${item.actorUsername}`
+                          : item.actorName}
                       </span>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        {!item.read ? (
+                          <span
+                            aria-label="Yangi"
+                            className="h-2 w-2 rounded-full bg-[var(--text-primary)]"
+                          />
+                        ) : null}
+                        <span className="text-[11.5px] text-[var(--text-muted)]">
+                          {item.timeLabel}
+                        </span>
+                      </div>
                     </div>
+
+                    <p className="mt-0.5 text-[13.5px] leading-relaxed text-[var(--text-secondary)]">
+                      {item.text}
+                    </p>
+
+                    {item.postSnippet ? (
+                      <p className="mt-1.5 truncate border-l-2 border-[var(--border-matte-hover)] pl-2.5 text-[12.5px] text-[var(--text-muted)]">
+                        {item.postSnippet}
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-[var(--text-secondary)]">
-                    {item.text}
-                  </p>
                 </div>
-              </div>
+
+                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+              </button>
             ))}
           </GlassCard>
         )}

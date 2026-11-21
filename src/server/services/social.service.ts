@@ -15,6 +15,7 @@ import {
   follows,
   notifications,
   postComments,
+  posts,
   profiles,
   userBlocks,
   type BlockLevel,
@@ -259,7 +260,7 @@ export async function createNotificationInTx(
 
 export async function listMyNotifications(userId: string, role: UserRole) {
   return withDbContext({ userId, role }, async (tx) => {
-    return tx
+    const rows = await tx
       .select({
         id: notifications.id,
         type: notifications.type,
@@ -272,12 +273,16 @@ export async function listMyNotifications(userId: string, role: UserRole) {
         actorUsername: profiles.username,
         actorDisplayName: profiles.displayName,
         actorAvatarId: profiles.avatarId,
+        postSnippet: sql<string | null>`left(${posts.body}, 120)`,
       })
       .from(notifications)
       .innerJoin(profiles, eq(notifications.actorId, profiles.userId))
+      .leftJoin(posts, eq(notifications.postId, posts.id))
       .where(eq(notifications.recipientId, userId))
       .orderBy(desc(notifications.createdAt))
       .limit(50);
+
+    return rows;
   });
 }
 

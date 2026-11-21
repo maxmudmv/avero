@@ -44,7 +44,10 @@ export interface NotificationItem {
     | "system";
   actorName: string;
   actorUsername: string;
+  actorAvatarId?: string;
+  actorId?: string;
   postId?: string | null;
+  postSnippet?: string | null;
   text: string;
   timeLabel: string;
   read: boolean;
@@ -96,8 +99,12 @@ function formatNotifText(
         : "Sizga yangi xabar yubordi";
     case "dm_request":
       return "Sizga xabar so‘rovi yubordi";
-    case "avatar_unlocked":
-      return `Yangi avatar ochildi: ${preview ?? "kolleksiya"} ✨`;
+    case "avatar_unlocked": {
+      const count = preview ? preview.split(",").filter(Boolean).length : 1;
+      return count > 1
+        ? `${count} ta yangi avatar ochildi`
+        : "Kunlik faollik uchun +1 yangi avatar ochildi";
+    }
     case "announcement":
       return preview ? `📢 ${preview}` : "📢 Platformadan muhim e’lon";
     case "warning":
@@ -438,7 +445,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             type: n.type,
             actorName: n.actorDisplayName,
             actorUsername: n.actorUsername,
+            actorAvatarId: n.actorAvatarId,
+            actorId: n.actorId,
             postId: n.postId,
+            postSnippet: n.postSnippet ?? null,
             text: formatNotifText(n.type, n.bodyPreview),
             timeLabel: formatNotifTime(n.createdAt),
             read: Boolean(n.readAt),

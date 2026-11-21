@@ -151,6 +151,7 @@ export interface ServerNotification {
   actorUsername: string;
   actorDisplayName: string;
   actorAvatarId: string;
+  postSnippet?: string | null;
 }
 
 export interface ModReportItem {
@@ -651,6 +652,9 @@ export const apiClient = {
     }),
 
   // --- Posts CRUD & Interactions ---
+  getPost: (postId: string) =>
+    apiFetch<{ post: ServerPost }>(`/api/v1/posts/${encodeURIComponent(postId)}`),
+
   createPost: (payload: {
     postType: PostTypeId;
     body: string;

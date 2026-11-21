@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search as SearchIcon, ShieldCheck, UserPlus, X } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
@@ -12,27 +12,38 @@ import {
   GlassButton,
   GlassCard,
   GlassInput,
-  GlassTab,
-  GlassTabs,
   useDesignSystem,
 } from "@/design-system";
-import { apiClient, type ServerSearchResults } from "@/lib/api-client";
+import {
+  apiClient,
+  type ServerPost,
+  type ServerSearchResults,
+} from "@/lib/api-client";
+
+function sortByPopularity(list: ServerPost[]): ServerPost[] {
+  return [...list].sort((a, b) => {
+    const scoreA =
+      a.viewsCount + a.likesCount * 3 + a.commentsCount * 4 + a.repostsCount * 4;
+    const scoreB =
+      b.viewsCount + b.likesCount * 3 + b.commentsCount * 4 + b.repostsCount * 4;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+  });
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useDesignSystem();
-  const { auth, posts: localPosts, t } = useAppState();
-  const localPostsRef = useRef(localPosts);
-  localPostsRef.current = localPosts;
+  const { auth, t } = useAppState();
 
   const initialTag = searchParams.get("tag") ?? "";
   const initialQuery = searchParams.get("q") ?? "";
 
   const [query, setQuery] = useState(initialQuery);
   const [activeTag, setActiveTag] = useState(initialTag);
-  const [tab, setTab] = useState<"all" | "posts" | "users" | "hashtags">("all");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [popularPosts, setPopularPosts] = useState<ServerPost[]>([]);
   const [results, setResults] = useState<ServerSearchResults>({
     users: [],
     hashtags: [],
@@ -46,35 +57,52 @@ function SearchContent() {
     setActiveTag(searchParams.get("tag") ?? "");
   }, [searchParams]);
 
-  // All search queries run server-side via GET /api/v1/search
+  const isSearching = query.trim().length > 0 || activeTag.length > 0;
+
+  // Load most popular / most viewed posts by default; run search when query or #tag is entered
   useEffect(() => {
     let cancelled = false;
+
+    if (!isSearching) {
+      setLoading(true);
+      void (async () => {
+        try {
+          const trendingRes = await apiClient.getFeed({
+            tab: "trending",
+            window: "30d",
+            limit: 30,
+          });
+          if (!cancelled && trendingRes.ok && trendingRes.data.posts.length > 0) {
+            setPopularPosts(sortByPopularity(trendingRes.data.posts));
+            return;
+          }
+          const fallbackRes = await apiClient.getFeed({
+            tab: "for_you",
+            limit: 30,
+          });
+          if (!cancelled && fallbackRes.ok) {
+            setPopularPosts(sortByPopularity(fallbackRes.data.posts));
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
         const res = await apiClient.search({
           q: query,
-          type: tab,
+          type: "all",
           tag: activeTag || undefined,
           limit: 25,
         });
         if (!cancelled && res.ok) {
           setResults(res.data);
-        } else if (!cancelled && !res.ok) {
-          // Graceful local fallback if server DB isn't attached in offline preview
-          const q = query.trim().toLowerCase();
-          const filtered = localPostsRef.current.filter((p) => {
-            if (activeTag) {
-              return p.hashtags.includes(activeTag.toLowerCase());
-            }
-            if (!q) return true;
-            return (
-              p.body.toLowerCase().includes(q) ||
-              p.authorUsername.toLowerCase().includes(q) ||
-              p.hashtags.some((t) => t.includes(q.replace(/^#/, "")))
-            );
-          });
-          setResults({ users: [], hashtags: [], posts: filtered });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -85,12 +113,12 @@ function SearchContent() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [query, tab, activeTag]);
+  }, [query, activeTag, isSearching]);
 
   const handleFollowToggle = async (userId: string) => {
     if (!auth?.user) {
       toast({
-        title: "Obuna bo‘lish uchun tizimga kiring",
+        title: t.auth.signIn,
         variant: "warning",
       });
       return;
@@ -103,10 +131,10 @@ function SearchContent() {
       toast({
         title:
           res.data.status === "requested"
-            ? "Kuzatish so‘rovi yuborildi"
+            ? t.search.requested
             : res.data.status === "following"
-              ? "Obuna bo‘ldingiz"
-              : "Bekor qilindi",
+              ? t.search.following
+              : t.auth.cancel,
         variant: "success",
       });
     } else {
@@ -152,143 +180,162 @@ function SearchContent() {
         </div>
       ) : null}
 
-      <GlassTabs
-        value={tab}
-        onValueChange={(v) =>
-          setTab(v as "all" | "posts" | "users" | "hashtags")
-        }
-        ariaLabel={t.search.pageTitle}
-        fullWidth
-      >
-        <GlassTab value="all">{t.search.all}</GlassTab>
-        <GlassTab value="posts">{t.search.posts}</GlassTab>
-        <GlassTab value="users">{t.search.people}</GlassTab>
-        <GlassTab value="hashtags">{t.search.hashtags}</GlassTab>
-      </GlassTabs>
-
-      {loading ? (
-        <p className="py-2 text-center text-[13px] text-[var(--text-muted)]">
-          {t.search.searching}
-        </p>
-      ) : null}
-
-      {/* Hashtags section */}
-      {(tab === "all" || tab === "hashtags") && results.hashtags.length > 0 ? (
-        <div className="space-y-2">
-          <h2 className="px-1 text-[12.5px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Hashtaglar
-          </h2>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 px-1">
-            {results.hashtags.map((h) => (
-              <button
-                key={h.id}
-                type="button"
-                onClick={() => router.push(`/search?tag=${encodeURIComponent(h.tag)}`)}
-                className="glass-focus-ring inline-flex items-center gap-1 rounded-md font-mono text-[13px] font-medium text-sky-400/90 transition-colors hover:text-sky-300 cursor-pointer"
-              >
-                <span>#{h.tag}</span>
-                <span className="text-[11.5px] font-normal text-[var(--text-muted)]">
-                  {h.postsCount}
-                </span>
-              </button>
+      {!isSearching ? (
+        /* Default Discovery Stream: Most Popular & Most Viewed Posts */
+        loading && popularPosts.length === 0 ? (
+          <div className="space-y-3">
+            {[0, 1].map((idx) => (
+              <GlassCard key={idx} padding="md" className="space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-white/[0.06]" />
+                  <div className="h-3.5 w-28 animate-pulse rounded-lg bg-white/[0.06]" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3.5 w-full animate-pulse rounded-lg bg-white/[0.05]" />
+                  <div className="h-3.5 w-4/5 animate-pulse rounded-lg bg-white/[0.05]" />
+                </div>
+              </GlassCard>
             ))}
           </div>
-        </div>
-      ) : null}
+        ) : popularPosts.length === 0 ? (
+          <GlassCard padding="lg" className="text-center">
+            <p className="text-[14.5px] text-[var(--text-secondary)]">
+              {t.feed.emptyAll}
+            </p>
+          </GlassCard>
+        ) : (
+          <div className="space-y-3">
+            {popularPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        )
+      ) : (
+        /* Live Search Results */
+        <>
+          {loading ? (
+            <p className="py-2 text-center text-[13px] text-[var(--text-muted)]">
+              {t.search.searching}
+            </p>
+          ) : null}
 
-      {/* Users section */}
-      {(tab === "all" || tab === "users") && results.users.length > 0 ? (
-        <div className="space-y-2">
-          <h2 className="px-1 text-[12.5px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Foydalanuvchilar
-          </h2>
-          {results.users.map((u) => (
-            <GlassCard
-              key={u.userId}
-              padding="sm"
-              className="flex items-center justify-between gap-3"
-            >
-              <div
-                onClick={() => router.push(`/u/${encodeURIComponent(u.username)}`)}
-                className="flex items-center gap-3 cursor-pointer"
-              >
-                <GlassAvatar
-                  name={u.displayName}
-                  seed={u.username}
-                  avatarId={u.avatarId}
-                  size="md"
-                />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[14.5px] font-semibold text-[var(--text-primary)] hover:underline">
-                      {u.displayName}
+          {results.hashtags.length > 0 ? (
+            <div className="space-y-2">
+              <h2 className="px-1 text-[12px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                {t.search.hashtags}
+              </h2>
+              <div className="flex flex-wrap gap-x-4 gap-y-2 px-1">
+                {results.hashtags.map((h) => (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() =>
+                      router.push(`/search?tag=${encodeURIComponent(h.tag)}`)
+                    }
+                    className="glass-focus-ring inline-flex items-center gap-1 rounded-md font-mono text-[13px] font-medium text-sky-400/90 transition-colors hover:text-sky-300 cursor-pointer"
+                  >
+                    <span>#{h.tag}</span>
+                    <span className="text-[11.5px] font-normal text-[var(--text-muted)]">
+                      {h.postsCount}
                     </span>
-                    {u.verified ? (
-                      <ShieldCheck className="h-3.5 w-3.5 text-sky-400" />
-                    ) : null}
-                  </div>
-                  <p className="font-mono text-[12px] text-[var(--text-muted)]">
-                    @{u.username} · {u.postsCount} post · {u.followersCount}{" "}
-                    obunachi
-                  </p>
-                </div>
+                  </button>
+                ))}
               </div>
-              {auth?.user?.id !== u.userId ? (
-                <GlassButton
-                  size="sm"
-                  variant={
-                    (followStates[u.userId] ?? "none") === "none"
-                      ? "glass"
-                      : "subtle"
-                  }
-                  onClick={() => void handleFollowToggle(u.userId)}
+            </div>
+          ) : null}
+
+          {results.users.length > 0 ? (
+            <div className="space-y-2">
+              <h2 className="px-1 text-[12px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                {t.search.people}
+              </h2>
+              {results.users.map((u) => (
+                <GlassCard
+                  key={u.userId}
+                  padding="sm"
+                  className="flex items-center justify-between gap-3"
                 >
-                  <UserPlus className="h-3.5 w-3.5" />
-                  {followStates[u.userId] === "following"
-                    ? "Kuzatilmoqda"
-                    : followStates[u.userId] === "requested"
-                      ? "So‘rov yuborildi"
-                      : "Kuzatish"}
-                </GlassButton>
-              ) : null}
+                  <div
+                    onClick={() =>
+                      router.push(`/u/${encodeURIComponent(u.username)}`)
+                    }
+                    className="flex items-center gap-3 cursor-pointer"
+                  >
+                    <GlassAvatar
+                      name={u.displayName}
+                      seed={u.username}
+                      avatarId={u.avatarId}
+                      size="sm"
+                    />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[14px] font-semibold text-[var(--text-primary)] hover:underline">
+                          @{u.username}
+                        </span>
+                        {u.verified ? (
+                          <ShieldCheck className="h-3.5 w-3.5 text-sky-400" />
+                        ) : null}
+                      </div>
+                      <p className="text-[12px] text-[var(--text-muted)]">
+                        {u.displayName} · {u.postsCount} {t.profile.posts.toLowerCase()}
+                      </p>
+                    </div>
+                  </div>
+                  {auth?.user?.id !== u.userId ? (
+                    <GlassButton
+                      size="sm"
+                      variant={
+                        (followStates[u.userId] ?? "none") === "none"
+                          ? "glass"
+                          : "subtle"
+                      }
+                      onClick={() => void handleFollowToggle(u.userId)}
+                    >
+                      <UserPlus className="h-3.5 w-3.5" />
+                      {followStates[u.userId] === "following"
+                        ? t.search.following
+                        : followStates[u.userId] === "requested"
+                          ? t.search.requested
+                          : t.search.follow}
+                    </GlassButton>
+                  ) : null}
+                </GlassCard>
+              ))}
+            </div>
+          ) : null}
+
+          {results.posts.length > 0 ? (
+            <div className="space-y-3">
+              {results.posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+          ) : null}
+
+          {!loading &&
+          results.posts.length === 0 &&
+          results.users.length === 0 &&
+          results.hashtags.length === 0 ? (
+            <GlassCard padding="lg" className="text-center">
+              <p className="text-[14.5px] text-[var(--text-secondary)]">
+                {t.search.noResults}
+              </p>
             </GlassCard>
-          ))}
-        </div>
-      ) : null}
-
-      {/* Posts section */}
-      {(tab === "all" || tab === "posts") && results.posts.length > 0 ? (
-        <div className="space-y-3">
-          <h2 className="px-1 text-[12.5px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Postlar
-          </h2>
-          {results.posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      ) : null}
-
-      {!loading &&
-      results.posts.length === 0 &&
-      results.users.length === 0 &&
-      results.hashtags.length === 0 ? (
-        <GlassCard padding="lg" className="text-center">
-          <p className="text-[14.5px] text-[var(--text-secondary)]">
-            Hech qanday natija topilmadi.
-          </p>
-        </GlassCard>
-      ) : null}
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
 
 export default function SearchPage() {
+  const { t } = useAppState();
   return (
-    <AppShell title="Qidiruv">
+    <AppShell title={t.search.pageTitle}>
       <Suspense
         fallback={
           <p className="py-6 text-center text-[13px] text-[var(--text-muted)]">
-            Qidiruv yuklanmoqda...
+            {t.search.searching}
           </p>
         }
       >

@@ -8,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { triggerHapticSelection, useDesignSystem } from "@/design-system";
 import {
   extractLinkTokenFromStartParam,
@@ -34,7 +34,6 @@ export function TelegramWebAppProvider({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { resolvedTheme, setTheme } = useDesignSystem();
 
   const [webApp, setWebApp] = useState<TelegramWebAppInstance | null>(null);
@@ -119,27 +118,16 @@ export function TelegramWebAppProvider({
     }
   }, [webApp, resolvedTheme]);
 
-  // Manage Telegram native BackButton automatically on nested routes
+  // Keep Telegram native BackButton hidden because Avero provides its own bottom dock & in-app back navigation
   useEffect(() => {
     const backBtn = webApp?.BackButton;
     if (!backBtn) return;
-
-    const handleBack = () => {
-      triggerHapticSelection();
-      router.back();
-    };
-
-    if (pathname !== "/") {
-      backBtn.show();
-      backBtn.onClick(handleBack);
-    } else {
+    try {
       backBtn.hide();
+    } catch {
+      // Ignore partial WebView implementations
     }
-
-    return () => {
-      backBtn.offClick(handleBack);
-    };
-  }, [webApp, pathname, router]);
+  }, [webApp, pathname]);
 
   const value = useMemo<TelegramMiniAppContextValue>(
     () => ({

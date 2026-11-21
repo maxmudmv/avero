@@ -218,7 +218,7 @@ body {
         transparent 360deg
       ),
       linear-gradient(var(--glass-rim-base), var(--glass-rim-base));
-    animation: lg-comet-orbit 8.5s linear infinite;
+    animation: lg-comet-orbit 2.4s linear infinite;
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);

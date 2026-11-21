@@ -11,6 +11,12 @@ import React, {
 } from "react";
 import type { PostStyleTokens, PostTypeId } from "@/lib/posts/styles";
 import {
+  getTranslations,
+  normalizeAppLanguage,
+  type AppLanguage,
+  type AppTranslations,
+} from "@/lib/i18n";
+import {
   apiClient,
   getTmaSessionToken,
   setTmaSessionToken,
@@ -115,6 +121,9 @@ function formatNotifTime(iso: string): string {
 interface AppStateContextValue {
   auth: AuthMeData | null;
   authLoading: boolean;
+  language: AppLanguage;
+  setLanguage: (lang: AppLanguage) => void;
+  t: AppTranslations;
   refreshAuth: () => Promise<void>;
   loginWithTelegramNow: () => Promise<{ ok: boolean; error?: string }>;
   logoutNow: () => Promise<void>;
@@ -162,7 +171,51 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const [auth, setAuth] = useState<AuthMeData | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [language, setLanguageState] = useState<AppLanguage>("uz");
   const [posts, setPosts] = useState<ServerPost[]>([]);
+
+  // Restore persisted interface language on mount
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("avero_lang");
+      if (saved) {
+        const normalized = normalizeAppLanguage(saved);
+        setLanguageState(normalized);
+        document.documentElement.lang = normalized;
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  // Sync language when server auth settings arrive
+  useEffect(() => {
+    if (auth?.settings?.language) {
+      const normalized = normalizeAppLanguage(auth.settings.language);
+      setLanguageState(normalized);
+      document.documentElement.lang = normalized;
+      try {
+        window.localStorage.setItem("avero_lang", normalized);
+      } catch {
+        // ignore
+      }
+    }
+  }, [auth?.settings?.language]);
+
+  const setLanguage = useCallback((lang: AppLanguage) => {
+    const normalized = normalizeAppLanguage(lang);
+    setLanguageState(normalized);
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = normalized;
+    }
+    try {
+      window.localStorage.setItem("avero_lang", normalized);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const t = useMemo(() => getTranslations(language), [language]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [feedUsingServer, setFeedUsingServer] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -540,6 +593,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     () => ({
       auth,
       authLoading,
+      language,
+      setLanguage,
+      t,
       refreshAuth,
       loginWithTelegramNow,
       logoutNow,
@@ -565,6 +621,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [
       auth,
       authLoading,
+      language,
+      setLanguage,
+      t,
       refreshAuth,
       loginWithTelegramNow,
       logoutNow,

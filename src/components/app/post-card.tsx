@@ -100,6 +100,7 @@ export const PostCard = React.memo(function PostCard({
   const { toast } = useDesignSystem();
   const {
     auth,
+    t,
     toggleReaction,
     repostPost,
     addOrUpdatePostInList,
@@ -642,7 +643,7 @@ export const PostCard = React.memo(function PostCard({
           setCommentsOpen(false);
           setReplyTo(null);
         }}
-        title={`Izohlar (${post.commentsCount})`}
+        title={t.post.commentsTitle(post.commentsCount)}
         footer={
           post.commentPolicy !== "closed" ? (
             <form
@@ -651,10 +652,10 @@ export const PostCard = React.memo(function PostCard({
             >
               {replyTo ? (
                 <div className="flex items-center justify-between px-1 text-[12px] text-[var(--text-secondary)]">
-                  <span>@{replyTo.authorUsername} ga javob</span>
+                  <span>{t.post.replyingTo(replyTo.authorUsername)}</span>
                   <button
                     type="button"
-                    aria-label="Javobni bekor qilish"
+                    aria-label="Cancel reply"
                     onClick={() => setReplyTo(null)}
                     className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
                   >
@@ -667,8 +668,8 @@ export const PostCard = React.memo(function PostCard({
                   type="text"
                   placeholder={
                     replyTo
-                      ? `@${replyTo.authorUsername} ga javob yozing...`
-                      : "Izoh yozing..."
+                      ? t.post.replyPlaceholder(replyTo.authorUsername)
+                      : t.post.commentPlaceholder
                   }
                   maxLength={500}
                   value={commentDraft}
@@ -679,7 +680,7 @@ export const PostCard = React.memo(function PostCard({
                   type="submit"
                   size="icon"
                   variant="glass"
-                  aria-label="Izoh yuborish"
+                  aria-label="Send"
                   disabled={!commentDraft.trim()}
                   className="h-10 w-10 shrink-0"
                 >
@@ -696,19 +697,19 @@ export const PostCard = React.memo(function PostCard({
               <Lock className="h-3.5 w-3.5 shrink-0 text-amber-400" />
               <span>
                 {post.commentPolicy === "closed"
-                  ? "Muallif ushbu postda izohlarni yopgan."
-                  : "Faqat muallifni kuzatuvchilar izoh yoza oladi."}
+                  ? t.post.commentsClosed
+                  : t.post.commentsFollowersOnly}
               </span>
             </div>
           ) : null}
 
           {loadingComments ? (
             <p className="py-6 text-center text-[13px] text-[var(--text-muted)]">
-              Izohlar yuklanmoqda...
+              {t.post.commentsLoading}
             </p>
           ) : comments.length === 0 ? (
             <p className="py-6 text-center text-[13.5px] text-[var(--text-muted)]">
-              Hali izohlar yo‘q.
+              {t.post.noComments}
             </p>
           ) : (
             <div className="space-y-2.5">

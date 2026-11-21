@@ -23,6 +23,10 @@ import {
   type ServerBlockItem,
 } from "@/lib/api-client";
 import {
+  normalizeAppLanguage,
+  type AppLanguage,
+} from "@/lib/i18n";
+import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   NOTIFICATION_TYPE_LABELS,
   type NotificationPreferences,
@@ -32,19 +36,6 @@ const LANGUAGE_OPTIONS = [
   { value: "uz", label: "O‘zbekcha", description: "Lotin alifbosi" },
   { value: "en", label: "English", description: "English (US)" },
   { value: "ru", label: "Русский", description: "Русский язык" },
-];
-
-const PRIVACY_OPTIONS = [
-  {
-    value: "public",
-    label: "Public (Ochiq kuzatish)",
-    description: "Postlar ommaviy, istalgan foydalanuvchi darhol kuzatadi",
-  },
-  {
-    value: "private",
-    label: "Private (So‘rov bilan kuzatish)",
-    description: "Postlar ommaviy, kuzatish so‘rovlarini siz tasdiqlaysiz",
-  },
 ];
 
 function SettingToggle({
@@ -96,9 +87,31 @@ function SettingToggle({
 
 export default function SettingsPage() {
   const { theme, setTheme, toast } = useDesignSystem();
-  const { auth, refreshAuth } = useAppState();
+  const {
+    auth,
+    refreshAuth,
+    language: appLanguage,
+    setLanguage: setAppLanguage,
+    t,
+  } = useAppState();
 
-  const [language, setLanguage] = useState("uz");
+  const [language, setLanguage] = useState<AppLanguage>(appLanguage);
+  useEffect(() => {
+    setLanguage(appLanguage);
+  }, [appLanguage]);
+
+  const handleLanguageChange = (nextVal: string) => {
+    const nextLang = normalizeAppLanguage(nextVal);
+    setLanguage(nextLang);
+    setAppLanguage(nextLang);
+    if (auth?.user) {
+      void apiClient.updateSettings({ language: nextLang }).then((res) => {
+        if (res.ok) {
+          void refreshAuth();
+        }
+      });
+    }
+  };
   const [privacyLevel, setPrivacyLevel] = useState<"public" | "private">(
     "public"
   );
@@ -165,7 +178,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!auth?.settings) return;
-    setLanguage(auth.settings.language);
+    setLanguage(normalizeAppLanguage(auth.settings.language));
     setTheme(auth.settings.theme);
     setPrivacyLevel(
       auth.settings.privacyLevel === "private" ? "private" : "public"
@@ -208,8 +221,9 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
+        setAppLanguage(language);
         await refreshAuth();
-        toast({ title: "Sozlamalar saqlandi", variant: "success" });
+        toast({ title: t.settings.savedToast, variant: "success" });
       } else {
         toast({ title: res.error.message, variant: "error" });
       }
@@ -305,7 +319,7 @@ export default function SettingsPage() {
   const hasTelegram = auth?.identities.some((i) => i.provider === "telegram");
 
   return (
-    <AppShell title="Sozlamalar">
+    <AppShell title={t.settings.pageTitle}>
       <div className="space-y-4">
         {/* 1. Til va Mavzu */}
         <GlassCard padding="md" className="space-y-4">
@@ -313,30 +327,30 @@ export default function SettingsPage() {
             style={{ fontFamily: "var(--font-display)" }}
             className="text-[16px] font-semibold text-[var(--text-primary)]"
           >
-            Ko‘rinish va Til
+            {t.settings.appearanceTitle}
           </h2>
 
           <GlassSelect
-            label="Til tanlash"
-            sheetTitle="Ilova tilini tanlang"
+            label={t.settings.languageLabel}
+            sheetTitle={t.settings.languageSheetTitle}
             value={language}
-            onValueChange={setLanguage}
+            onValueChange={handleLanguageChange}
             options={LANGUAGE_OPTIONS}
           />
 
           <div className="space-y-1.5">
             <span className="text-[13px] font-medium text-[var(--text-secondary)]">
-              Dark / Light rejim
+              {t.settings.themeLabel}
             </span>
             <GlassTabs
               value={theme}
               onValueChange={(v) => setTheme(v as ThemeMode)}
-              ariaLabel="Mavzu rejimi"
+              ariaLabel={t.settings.themeLabel}
               fullWidth
             >
-              <GlassTab value="system">Tizim</GlassTab>
-              <GlassTab value="dark">OLED Dark</GlassTab>
-              <GlassTab value="light">Pearl Light</GlassTab>
+              <GlassTab value="system">{t.settings.themeSystem}</GlassTab>
+              <GlassTab value="dark">{t.settings.themeDark}</GlassTab>
+              <GlassTab value="light">{t.settings.themeLight}</GlassTab>
             </GlassTabs>
           </div>
         </GlassCard>
@@ -347,60 +361,65 @@ export default function SettingsPage() {
             style={{ fontFamily: "var(--font-display)" }}
             className="text-[16px] font-semibold text-[var(--text-primary)]"
           >
-            Maxfiylik va Bildirishnomalar
+            {t.settings.privacyTitle}
           </h2>
 
           <GlassSelect
-            label="Maxfiylik darajasi (kuzatish so‘rovlari)"
-            sheetTitle="Profil maxfiyligi"
+            label={t.settings.privacyLevelLabel}
+            sheetTitle={t.settings.privacyLevelLabel}
             value={privacyLevel}
             onValueChange={(v) => {
               const mode = v as "public" | "private";
               setPrivacyLevel(mode);
               setAutoApproveFollows(mode === "public");
             }}
-            options={PRIVACY_OPTIONS}
+            options={[
+              {
+                value: "public",
+                label: t.settings.privacyPublic,
+                description: t.settings.privacyPublicDesc,
+              },
+              {
+                value: "private",
+                label: t.settings.privacyPrivate,
+                description: t.settings.privacyPrivateDesc,
+              },
+            ]}
           />
 
           <SettingToggle
-            label="Onlayn holatini ko‘rsatish"
-            description="Profil sahifangizda faollik indikatorini yoqish yoki o‘chirish"
+            label={t.settings.showOnlineLabel}
+            description={t.settings.showOnlineDesc}
             checked={showOnlineStatus}
             onChange={setShowOnlineStatus}
           />
           <SettingToggle
-            label="Kuzatish so‘rovlarini avtomatik tasdiqlash"
-            description="O‘chirilganda har bir kuzatuvchi sizning roziligingizni kutadi"
+            label={t.settings.autoApproveLabel}
+            description={t.settings.autoApproveDesc}
             checked={autoApproveFollows}
             onChange={setAutoApproveFollows}
           />
 
           <SettingToggle
-            label="@mention eslatmalari"
-            description="Boshqalar sizni matnda belgilashiga ruxsat berish"
+            label={t.settings.allowMentionsLabel}
+            description={t.settings.allowMentionsDesc}
             checked={allowMentions}
             onChange={setAllowMentions}
           />
           <SettingToggle
-            label="Email bildirishnomalari"
-            description="Muhim xavfsizlik xabarlarini emailga yuborish"
+            label={t.settings.emailNotifLabel}
+            description={t.settings.emailNotifDesc}
             checked={emailNotifications}
             onChange={setEmailNotifications}
           />
           <SettingToggle
-            label="Telegram bot bildirishnomalari"
-            description={
-              telegramBotStarted
-                ? "Bot /start qilingan — rozilik asosida xabar yuboriladi"
-                : "Yoqish uchun avval Telegram botni /start qilib tasdiqlang"
-            }
+            label={t.settings.telegramNotifLabel}
+            description={t.settings.telegramNotifDesc}
             checked={telegramNotifications}
             onChange={(next) => {
               if (next && !telegramBotStarted) {
                 toast({
-                  title: "Avval Telegram botni /start qiling",
-                  description:
-                    "Pastdagi tugma orqali botni ishga tushirishni tasdiqlang.",
+                  title: t.settings.telegramNotifDesc,
                   variant: "warning",
                 });
                 return;
@@ -442,7 +461,7 @@ export default function SettingsPage() {
           <div className="space-y-2 border-t border-[var(--border-matte)] pt-3">
             <div className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--text-primary)]">
               <Bell className="h-3.5 w-3.5 text-sky-400" />
-              Bildirishnoma turlari (alohida boshqaruv)
+              {t.settings.notifEventsTitle}
             </div>
             <div className="space-y-2">
               {NOTIFICATION_TYPE_LABELS.map((item) => (
@@ -466,7 +485,7 @@ export default function SettingsPage() {
               onClick={() => void handleSaveSettings()}
             >
               <Check className="h-4 w-4" />
-              Sozlamalarni saqlash
+              {t.settings.saveSettings}
             </GlassButton>
           </div>
         </GlassCard>
@@ -478,26 +497,25 @@ export default function SettingsPage() {
               style={{ fontFamily: "var(--font-display)" }}
               className="text-[16px] font-semibold text-[var(--text-primary)]"
             >
-              Akkaunt sozlamalari
+              {t.settings.accountTitle}
             </h2>
             <GlassBadge variant={auth?.user ? "success" : "matte"}>
               <Shield className="h-3 w-3" />
-              {auth?.user ? "Faol sessiya" : "Mehmon"}
+              {auth?.user ? t.settings.activeSession : t.settings.guest}
             </GlassBadge>
           </div>
 
           {!auth?.user ? (
             <div className="space-y-3 rounded-2xl border border-[var(--border-matte)] p-4">
               <p className="text-[13.5px] text-[var(--text-secondary)]">
-                Google yoki Telegram akkauntlaringizni boshqarish uchun avval
-                tizimga kiring.
+                {t.settings.signInToManage}
               </p>
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <a
                 href="/api/v1/auth/google/start"
                 className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-10 items-center rounded-full px-5 text-[13.5px] font-medium text-[var(--text-primary)]"
               >
-                <span className="relative z-10">Google bilan kirish</span>
+                <span className="relative z-10">{t.auth.loginWithGoogle}</span>
               </a>
             </div>
           ) : (
@@ -505,13 +523,13 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between rounded-2xl border border-[var(--border-matte)] px-4 py-3 text-[13.5px]">
                 <span>Google</span>
                 <GlassBadge variant={hasGoogle ? "success" : "matte"}>
-                  {hasGoogle ? "Ulangan" : "Ulanmagan"}
+                  {hasGoogle ? t.settings.connected : t.settings.notConnected}
                 </GlassBadge>
               </div>
               <div className="flex items-center justify-between rounded-2xl border border-[var(--border-matte)] px-4 py-3 text-[13.5px]">
                 <span>Telegram</span>
                 <GlassBadge variant={hasTelegram ? "success" : "matte"}>
-                  {hasTelegram ? "Ulangan" : "Ulanmagan"}
+                  {hasTelegram ? t.settings.connected : t.settings.notConnected}
                 </GlassBadge>
               </div>
 

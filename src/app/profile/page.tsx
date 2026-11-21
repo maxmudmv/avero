@@ -15,7 +15,7 @@ import {
 } from "@/lib/api-client";
 
 export default function ProfilePage() {
-  const { auth, posts, loginWithTelegramNow } = useAppState();
+  const { auth, posts, loginWithTelegramNow, t } = useAppState();
   const { isTma, webApp } = useTelegramMiniApp();
   const { toast } = useDesignSystem();
   const [tgLoading, setTgLoading] = useState(false);
@@ -70,11 +70,11 @@ export default function ProfilePage() {
     };
 
     return (
-      <AppShell title="Profil">
+      <AppShell title={t.profile.pageTitle}>
         <div className="space-y-4">
           <GlassCard padding="md" className="space-y-3">
             <p className="text-[13.5px] text-[var(--text-secondary)]">
-              Shaxsiy profil, 3 kunlik faollik va 30 ta avatarni ochish uchun hisobingizga kiring.
+              {t.profile.guestBanner}
             </p>
             <div className="flex flex-wrap items-center gap-2.5">
               {isTma ? (
@@ -124,7 +124,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <AppShell title="Profil">
+    <AppShell title={t.profile.pageTitle}>
       {dashboard ? (
         <ProfileView
           profile={dashboard.profile}
@@ -136,7 +136,7 @@ export default function ProfilePage() {
       ) : (
         <GlassCard padding="lg" className="text-center">
           <p className="text-[14px] text-[var(--text-muted)]">
-            Profil yuklanmoqda...
+            {t.profile.loading}
           </p>
         </GlassCard>
       )}

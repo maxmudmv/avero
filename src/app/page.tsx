@@ -14,15 +14,9 @@ import {
   cn,
 } from "@/design-system";
 
-const TRENDING_WINDOWS = [
-  { id: "24h" as const, label: "24 soat" },
-  { id: "7d" as const, label: "7 kun" },
-  { id: "30d" as const, label: "30 kun" },
-];
-
 export default function FeedPage() {
   const router = useRouter();
-  const { auth, posts, feedLoading, loadFeed } = useAppState();
+  const { auth, posts, feedLoading, loadFeed, t } = useAppState();
 
   const [feedTab, setFeedTab] = useState<"for_you" | "following" | "trending">(
     "for_you"
@@ -39,6 +33,11 @@ export default function FeedPage() {
   }, [feedTab, trendingWindow, loadFeed]);
 
   const displayedPosts = posts;
+  const trendingWindows = [
+    { id: "24h" as const, label: t.feed.h24 },
+    { id: "7d" as const, label: t.feed.d7 },
+    { id: "30d" as const, label: t.feed.d30 },
+  ];
 
   return (
     <AppShell
@@ -50,7 +49,7 @@ export default function FeedPage() {
           onClick={() => router.push("/compose")}
         >
           <Feather className="h-3.5 w-3.5" />
-          Yozish
+          {t.feed.writeBtn}
         </GlassButton>
       }
     >
@@ -61,12 +60,12 @@ export default function FeedPage() {
           onValueChange={(v) =>
             setFeedTab(v as "for_you" | "following" | "trending")
           }
-          ariaLabel="Asosiy lentalar"
+          ariaLabel="Feed"
           fullWidth
         >
-          <GlassTab value="for_you">Siz uchun</GlassTab>
-          <GlassTab value="following">Obunalar</GlassTab>
-          <GlassTab value="trending">Mashhurlar</GlassTab>
+          <GlassTab value="for_you">{t.feed.forYou}</GlassTab>
+          <GlassTab value="following">{t.feed.following}</GlassTab>
+          <GlassTab value="trending">{t.feed.trending}</GlassTab>
         </GlassTabs>
       </div>
 
@@ -74,9 +73,9 @@ export default function FeedPage() {
       {feedTab === "trending" ? (
         <div className="mb-3 flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar">
           <span className="mr-1 shrink-0 text-[12px] text-[var(--text-muted)]">
-            Vaqt oralig‘i:
+            {t.feed.timeRange}
           </span>
-          {TRENDING_WINDOWS.map((win) => (
+          {trendingWindows.map((win) => (
             <button
               key={win.id}
               type="button"
@@ -97,7 +96,7 @@ export default function FeedPage() {
       {/* Feed Stream */}
       <div className="space-y-3">
         {feedLoading && displayedPosts.length === 0 ? (
-          <div className="space-y-3" aria-label="Lenta yuklanmoqda">
+          <div className="space-y-3" aria-label="Loading">
             {[0, 1].map((idx) => (
               <GlassCard key={idx} padding="md" className="space-y-3">
                 <div className="flex items-center gap-2.5">
@@ -115,15 +114,15 @@ export default function FeedPage() {
           <GlassCard padding="lg" className="text-center">
             <p className="text-[15px] font-medium text-[var(--text-primary)]">
               {feedTab === "following" && !auth?.user
-                ? "Kuzatilayotganlar lentasini ko‘rish uchun tizimga kiring"
+                ? t.feed.emptyFollowingGuest
                 : feedTab === "following"
-                  ? "Siz hali birorta muallifni kuzatmayapsiz"
-                  : "Hozircha postlar topilmadi"}
+                  ? t.feed.emptyFollowing
+                  : t.feed.emptyAll}
             </p>
             <p className="mt-1 text-[13.5px] text-[var(--text-secondary)]">
               {feedTab === "following"
-                ? "Qidiruv bo‘limidan qiziqarli mualliflarni topib obuna bo‘ling."
-                : "Birinchi matnli postni yozing."}
+                ? t.feed.emptyFollowingHint
+                : t.feed.emptyAllHint}
             </p>
             <div className="mt-4 flex justify-center gap-2">
               {feedTab === "following" ? (
@@ -131,14 +130,14 @@ export default function FeedPage() {
                   variant="glass"
                   onClick={() => router.push("/search")}
                 >
-                  Mualliflarni topish
+                  {t.feed.findPeople}
                 </GlassButton>
               ) : (
                 <GlassButton
                   variant="glass"
                   onClick={() => router.push("/compose")}
                 >
-                  Post yozish
+                  {t.feed.writePost}
                 </GlassButton>
               )}
             </div>

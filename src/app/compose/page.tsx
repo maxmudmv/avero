@@ -34,7 +34,7 @@ const SIMPLE_STYLE_CONFIG: PostStyleTokens = { editorMode: "simple" };
 export default function ComposePage() {
   const router = useRouter();
   const { toast } = useDesignSystem();
-  const { auth, addOrUpdatePostInList, createLocalFallbackPost } =
+  const { auth, addOrUpdatePostInList, createLocalFallbackPost, t } =
     useAppState();
 
   const [postType, setPostType] = useState<PostTypeId>("note");
@@ -234,7 +234,7 @@ export default function ComposePage() {
   };
 
   return (
-    <AppShell title="Yozish">
+    <AppShell title={t.compose.pageTitle}>
       <div className="space-y-4">
         {/* Saved Private Drafts */}
         {savedDrafts.length > 0 ? (
@@ -242,10 +242,10 @@ export default function ComposePage() {
             <div className="flex items-center justify-between px-1">
               <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-[var(--text-secondary)]">
                 <FileText className="h-3.5 w-3.5" />
-                Shaxsiy qoralamalar ({savedDrafts.length})
+                {t.compose.privateDrafts(savedDrafts.length)}
               </span>
               <span className="text-[11.5px] text-[var(--text-muted)]">
-                Faqat sizga ko‘rinadi
+                {t.compose.onlyYouSee}
               </span>
             </div>
             <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -259,11 +259,11 @@ export default function ComposePage() {
                     onClick={() => handleResumeDraft(d)}
                     className="max-w-[180px] truncate text-[12.5px] text-[var(--text-primary)] hover:underline cursor-pointer"
                   >
-                    {d.body || "Bo‘sh qoralama"}
+                    {d.body || "..."}
                   </button>
                   <button
                     type="button"
-                    aria-label="Qoralamani o‘chirish"
+                    aria-label={t.post.delete}
                     onClick={() => void handleDeleteDraft(d.id)}
                     className="text-[var(--text-muted)] hover:text-rose-400 cursor-pointer"
                   >
@@ -280,7 +280,7 @@ export default function ComposePage() {
             {/* Header */}
             <div className="flex items-center gap-3">
               <GlassAvatar
-                name={auth?.profile?.displayName || "Siz"}
+                name={auth?.profile?.displayName || "Avero"}
                 seed={auth?.profile?.username || "guest"}
                 avatarId={auth?.profile?.avatarId}
                 size="md"
@@ -289,37 +289,37 @@ export default function ComposePage() {
                 <div className="font-mono text-[14px] font-semibold text-[var(--text-primary)]">
                   {auth?.profile?.username
                     ? `@${auth.profile.username}`
-                    : "Yangi post"}
+                    : t.compose.newPost}
                 </div>
                 <div className="font-mono text-[11.5px] text-[var(--text-muted)]">
                   {draftStatus === "saving"
-                    ? "Qoralama saqlanmoqda..."
+                    ? t.compose.draftSaving
                     : draftStatus === "saved"
-                      ? "Qoralama saqlandi"
-                      : `Limit: ${maxPostLength} belgi`}
+                      ? t.compose.draftSaved
+                      : t.compose.limitLabel(maxPostLength)}
                 </div>
               </div>
             </div>
 
             {/* Comment Policy Select */}
             <GlassSelect
-              label="Izohlar tartibi"
-              sheetTitle="Kimlar izoh yoza oladi?"
+              label={t.post.commentPolicyLabel}
+              sheetTitle={t.compose.commentPolicyTitle}
               value={commentPolicy}
               onValueChange={(val) =>
                 setCommentPolicy(val as CommentPolicy)
               }
               options={[
-                { value: "everyone", label: "Hamma yoza oladi" },
-                { value: "followers", label: "Faqat obunachilar" },
-                { value: "closed", label: "Izohlar yopilgan" },
+                { value: "everyone", label: t.post.policyEveryone },
+                { value: "followers", label: t.post.policyFollowers },
+                { value: "closed", label: t.post.policyClosed },
               ]}
             />
 
             {/* Textarea: inline #hashtags are automatically detected from text */}
             <GlassTextarea
-              label="Post matni"
-              placeholder="Fikringizni yozing... (#hashtag ham matn ichida yozilaveradi)"
+              label={t.post.postTextLabel}
+              placeholder={t.compose.placeholder}
               maxLength={maxPostLength}
               rows={7}
               value={body}
@@ -336,10 +336,7 @@ export default function ComposePage() {
                   ),
                 });
               }}
-              hint={
-                limitInfo?.nextMilestoneHint ??
-                "Dastlabki limit: 1000 belgi. Har bir taklif qilgan do‘stingiz uchun +25 belgi qo‘shiladi."
-              }
+              hint={limitInfo?.nextMilestoneHint ?? t.compose.defaultHint}
             />
 
             <div className="flex items-center justify-end gap-2.5 border-t border-[var(--border-matte)] pt-4">
@@ -348,7 +345,7 @@ export default function ComposePage() {
                 variant="ghost"
                 onClick={() => router.back()}
               >
-                Bekor qilish
+                {t.auth.cancel}
               </GlassButton>
               <GlassButton
                 type="submit"
@@ -357,7 +354,7 @@ export default function ComposePage() {
                 disabled={!canPublish}
               >
                 <Send className="h-4 w-4" />
-                Chop etish
+                {t.compose.publish}
               </GlassButton>
             </div>
           </form>

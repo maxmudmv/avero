@@ -22,7 +22,7 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useDesignSystem();
-  const { auth, posts: localPosts } = useAppState();
+  const { auth, posts: localPosts, t } = useAppState();
   const localPostsRef = useRef(localPosts);
   localPostsRef.current = localPosts;
 
@@ -119,14 +119,14 @@ function SearchContent() {
       <GlassInput
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Foydalanuvchi, #hashtag yoki post matnini qidiring..."
-        aria-label="Qidiruv maydoni"
+        placeholder={t.search.placeholder}
+        aria-label={t.search.pageTitle}
         leadingIcon={<SearchIcon className="h-4 w-4" />}
         trailingSlot={
           query ? (
             <button
               type="button"
-              aria-label="Qidiruvni tozalash"
+              aria-label="Clear"
               onClick={() => setQuery("")}
               className="rounded-lg p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
             >
@@ -147,7 +147,7 @@ function SearchContent() {
               router.replace("/search");
             }}
           >
-            Filtrni olib tashlash
+            {t.search.clearFilter}
           </GlassButton>
         </div>
       ) : null}
@@ -157,18 +157,18 @@ function SearchContent() {
         onValueChange={(v) =>
           setTab(v as "all" | "posts" | "users" | "hashtags")
         }
-        ariaLabel="Qidiruv turlari"
+        ariaLabel={t.search.pageTitle}
         fullWidth
       >
-        <GlassTab value="all">Barchasi</GlassTab>
-        <GlassTab value="posts">Postlar</GlassTab>
-        <GlassTab value="users">Mualliflar</GlassTab>
-        <GlassTab value="hashtags">Hashtaglar</GlassTab>
+        <GlassTab value="all">{t.search.all}</GlassTab>
+        <GlassTab value="posts">{t.search.posts}</GlassTab>
+        <GlassTab value="users">{t.search.people}</GlassTab>
+        <GlassTab value="hashtags">{t.search.hashtags}</GlassTab>
       </GlassTabs>
 
       {loading ? (
         <p className="py-2 text-center text-[13px] text-[var(--text-muted)]">
-          Serverdan qidirilmoqda...
+          {t.search.searching}
         </p>
       ) : null}
 

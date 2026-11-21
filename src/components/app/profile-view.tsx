@@ -63,7 +63,7 @@ export function ProfileView({
   onRefresh,
 }: ProfileViewProps) {
   const { toast } = useDesignSystem();
-  const { auth, refreshAuth } = useAppState();
+  const { auth, refreshAuth, t } = useAppState();
 
   const [editOpen, setEditOpen] = useState(false);
 
@@ -463,31 +463,30 @@ export function ProfileView({
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--text-primary)]">
               <Sparkles className="h-4 w-4 text-sky-400" />
-              Kunlik faollik va avatarlar
+              {t.profile.dailyActivityTitle}
             </span>
             <GlassBadge variant="success">
-              {activity.activeDaysCount ?? 1}-faol kun
+              {t.profile.activeDayBadge(activity.activeDaysCount ?? 1)}
             </GlassBadge>
           </div>
           <p className="text-[12.5px] text-[var(--text-secondary)]">
-            Har faol bo‘lgan kuningizda 1 tadan yangi avatar avtomatik ochilib
-            boradi. (Faqat sizga ko‘rinadi)
+            {t.profile.dailyActivityDesc}
           </p>
           <div className="grid grid-cols-3 gap-2 pt-1 text-center">
             <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
               <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
-                {activity.activeDaysCount ?? 1} kun
+                {activity.activeDaysCount ?? 1} {t.profile.daysUnit}
               </div>
               <div className="text-[11px] text-[var(--text-muted)]">
-                Faol kunlar
+                {t.profile.activeDaysLabel}
               </div>
             </div>
             <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
               <div className="font-mono text-[15px] font-bold text-[var(--text-primary)]">
-                {activity.accountAgeDays} kun
+                {activity.accountAgeDays} {t.profile.daysUnit}
               </div>
               <div className="text-[11px] text-[var(--text-muted)]">
-                Profil yoshi
+                {t.profile.profileAgeLabel}
               </div>
             </div>
             <div className="rounded-2xl border border-[var(--border-matte)] p-2.5">
@@ -495,7 +494,7 @@ export function ProfileView({
                 {activity.unlockedAvatars.length}/30
               </div>
               <div className="text-[11px] text-[var(--text-muted)]">
-                Avatarlar
+                {t.profile.avatarsLabel}
               </div>
             </div>
           </div>

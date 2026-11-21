@@ -59,6 +59,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
   const {
     auth,
     authLoading,
+    t,
     refreshAuth,
     loginWithTelegramNow,
     logoutNow,
@@ -315,7 +316,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
   const dockTabs = [
     {
       id: "feed",
-      label: "Lenta",
+      label: t.nav.feed,
       icon: Home,
       onPress: () => {
         setMenuOpen(false);
@@ -324,7 +325,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
     },
     {
       id: "search",
-      label: "Qidiruv",
+      label: t.nav.search,
       icon: Search,
       onPress: () => {
         setMenuOpen(false);
@@ -333,7 +334,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
     },
     {
       id: "compose",
-      label: "Yozish",
+      label: t.nav.compose,
       icon: Feather,
       onPress: () => {
         setMenuOpen(false);
@@ -342,7 +343,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
     },
     {
       id: "menu",
-      label: "Menyu",
+      label: t.nav.menu,
       icon: LayoutGrid,
       onPress: () => {
         triggerHapticImpact("light");
@@ -367,54 +368,52 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
   }> = [
     {
       href: "/profile",
-      label: "Profil",
-      description: auth?.profile ? `@${auth.profile.username}` : "Shaxsiy sahifa",
+      label: t.menu.profile,
+      description: auth?.profile ? `@${auth.profile.username}` : t.menu.profileDesc,
       icon: User,
     },
     {
       href: "/notifications",
-      label: "Bildirishnomalar",
-      description: unreadCount > 0 ? `${unreadCount} ta yangi` : "Hammasi o‘qilgan",
+      label: t.menu.notifications,
+      description:
+        unreadCount > 0
+          ? t.menu.notificationsNew(unreadCount)
+          : t.menu.notificationsAllRead,
       icon: Bell,
       badge: unreadCount > 0 ? unreadCount : undefined,
     },
     {
       href: "/bookmarks",
-      label: "Saqlanganlar",
-      description: "Saqlab qo‘yilgan matnlar",
+      label: t.menu.bookmarks,
+      description: t.menu.bookmarksDesc,
       icon: Bookmark,
     },
     {
       href: "/messages",
-      label: "Xabarlar",
-      description: "Shaxsiy yozishmalar",
+      label: t.menu.messages,
+      description: t.menu.messagesDesc,
       icon: MessageSquare,
     },
     {
       href: "/settings",
-      label: "Sozlamalar",
-      description: "Til, mavzu, maxfiylik",
+      label: t.menu.settings,
+      description: t.menu.settingsDesc,
       icon: Settings,
     },
     ...(isStaff
       ? [
           {
             href: "/admin",
-            label: "Boshqaruv",
-            description:
-              auth?.user?.role === "super_admin"
-                ? "Super Admin paneli"
-                : auth?.user?.role === "admin"
-                  ? "Admin paneli"
-                  : "Moderatsiya",
+            label: t.menu.admin,
+            description: auth?.user?.role ?? "staff",
             icon: ShieldCheck,
           },
         ]
       : []),
     {
       href: "/help",
-      label: "Yordam",
-      description: "Qo‘llanma va tizim holati",
+      label: t.menu.help,
+      description: t.menu.helpDesc,
       icon: HelpCircle,
     },
   ];
@@ -467,7 +466,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                   onClick={() => setLoginModalOpen(true)}
                 >
                   <LogIn className="h-3.5 w-3.5" />
-                  Kirish
+                  {t.auth.signIn}
                 </GlassButton>
               )}
             </div>
@@ -482,7 +481,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
               onClick={() => setLoginModalOpen(true)}
             >
               <LogIn className="h-3.5 w-3.5" />
-              Kirish
+              {t.auth.signIn}
             </GlassButton>
           ) : (
             <span />
@@ -500,30 +499,30 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
       <GlassModal
         open={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
-        title="Avero’ga kirish"
-        description="Username va parol bilan kiring yoki Google / Telegram orqali davom eting."
+        title={t.auth.signInTitle}
+        description={t.auth.signInDesc}
         size="sm"
       >
         <div className="space-y-4">
           <form onSubmit={handlePasswordLogin} className="space-y-3">
             <GlassInput
-              label="Username"
+              label={t.auth.usernameLabel}
               placeholder="@username"
               autoComplete="username"
               value={loginUsername}
               onChange={(e) => setLoginUsername(e.target.value)}
             />
             <GlassInput
-              label="Parol"
+              label={t.auth.passwordLabel}
               type={showLoginPassword ? "text" : "password"}
-              placeholder="Parolingizni kiriting"
+              placeholder={t.auth.passwordPlaceholder}
               autoComplete="current-password"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
               trailingSlot={
                 <button
                   type="button"
-                  aria-label="Parolni ko‘rsatish"
+                  aria-label="Toggle password"
                   onClick={() => setShowLoginPassword((v) => !v)}
                   className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
                 >
@@ -543,13 +542,13 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
               className="w-full"
             >
               <KeyRound className="h-4 w-4" />
-              Username bilan kirish
+              {t.auth.loginWithUsername}
             </GlassButton>
           </form>
 
           <div className="flex items-center gap-3 text-[11.5px] text-[var(--text-muted)]">
             <span className="h-px flex-1 bg-[var(--border-matte)]" />
-            <span>yoki</span>
+            <span>{t.auth.or}</span>
             <span className="h-px flex-1 bg-[var(--border-matte)]" />
           </div>
 
@@ -561,7 +560,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
               className="w-full"
             >
               <LogIn className="h-4 w-4" />
-              Google bilan kirish
+              {t.auth.loginWithGoogle}
             </GlassButton>
 
             {isTma ? (
@@ -573,7 +572,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                 className="w-full"
               >
                 <Send className="h-4 w-4 text-sky-400" />
-                Telegram orqali kirish
+                {t.auth.loginWithTelegram}
               </GlassButton>
             ) : (
               <a
@@ -583,7 +582,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                 className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full px-6 text-[15px] font-medium text-[var(--text-primary)]"
               >
                 <Send className="relative z-10 h-4 w-4 text-sky-400" />
-                <span className="relative z-10">Telegram orqali kirish</span>
+                <span className="relative z-10">{t.auth.loginWithTelegram}</span>
               </a>
             )}
           </div>
@@ -597,8 +596,8 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
           setSetupDismissed(true);
           setSetupModalOpen(false);
         }}
-        title="Hisobingizni sozlang"
-        description="Username va parol o‘rnating — keyingi safar to‘g‘ridan-to‘g‘ri username va parol bilan ham kira olasiz."
+        title={t.auth.setupTitle}
+        description={t.auth.setupDesc}
         size="sm"
         footer={
           <>
@@ -609,14 +608,14 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                 setSetupModalOpen(false);
               }}
             >
-              Keyinroq
+              {t.auth.later}
             </GlassButton>
             <GlassButton
               variant="glass"
               loading={savingSetup}
               onClick={(e) => void handleCompleteSetup(e)}
             >
-              Saqlash
+              {t.auth.save}
             </GlassButton>
           </>
         }
@@ -793,12 +792,12 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                         style={{ fontFamily: "var(--font-display)" }}
                         className="text-[15.5px] font-semibold tracking-[-0.01em] text-[var(--text-primary)]"
                       >
-                        Menyu
+                        {t.menu.title}
                       </span>
                       <GlassButton
                         size="icon"
                         variant="subtle"
-                        aria-label="Menyuni yopish"
+                        aria-label="Close"
                         onClick={() => setMenuOpen(false)}
                         className="h-8 w-8"
                       >
@@ -841,7 +840,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                               className="h-8 shrink-0 px-3 text-[12px]"
                             >
                               <LogOut className="h-3.5 w-3.5" />
-                              Chiqish
+                              {t.menu.logout}
                             </GlassButton>
                           </div>
 
@@ -853,14 +852,14 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                               className="w-full"
                             >
                               <KeyRound className="h-3.5 w-3.5" />
-                              Username va parol o‘rnatish
+                              {t.menu.setupPasswordBtn}
                             </GlassButton>
                           ) : null}
                         </div>
                       ) : (
                         <div className="flex flex-col gap-2.5">
                           <div className="text-[12.5px] text-[var(--text-secondary)]">
-                            Shaxsiy profil, postlar va bildirishnomalar uchun tizimga kiring
+                            {t.menu.signInPrompt}
                           </div>
                           <GlassButton
                             size="sm"
@@ -872,7 +871,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                             className="w-full"
                           >
                             <KeyRound className="h-3.5 w-3.5" />
-                            Username va parol bilan kirish
+                            {t.menu.signInPasswordBtn}
                           </GlassButton>
                           <div className="grid grid-cols-2 gap-2">
                             {isTma ? (

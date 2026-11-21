@@ -54,7 +54,9 @@ function formatRelativeTime(iso: string): string {
 }
 
 function renderTextWithMentions(text: string): React.ReactNode {
-  const parts = text.split(/(@[a-zA-Z0-9._]{5,20})/g);
+  const parts = text.split(
+    /(@[a-zA-Z0-9._]{5,20}|#[a-zA-Z0-9_\u0400-\u04FF]{2,32})/g
+  );
   return parts.map((part, idx) => {
     if (part.startsWith("@") && part.length >= 6) {
       const handle = part.slice(1).toLowerCase();
@@ -63,6 +65,18 @@ function renderTextWithMentions(text: string): React.ReactNode {
           key={`${idx}-${part}`}
           href={`/u/${encodeURIComponent(handle)}`}
           className="font-mono text-sky-400 hover:underline"
+        >
+          {part}
+        </Link>
+      );
+    }
+    if (part.startsWith("#") && part.length >= 3) {
+      const tag = part.slice(1).toLowerCase();
+      return (
+        <Link
+          key={`${idx}-${part}`}
+          href={`/search?tag=${encodeURIComponent(tag)}`}
+          className="font-medium text-sky-400/90 hover:text-sky-300 hover:underline"
         >
           {part}
         </Link>
@@ -495,20 +509,27 @@ export const PostCard = React.memo(function PostCard({
             {renderTextWithMentions(post.body)}
           </p>
 
-          {/* Clean Borderless Inline Hashtags aligned flush left */}
-          {post.hashtags.length > 0 ? (
-            <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
-              {post.hashtags.slice(0, 3).map((tag) => (
-                <Link
-                  key={tag}
-                  href={`/search?tag=${encodeURIComponent(tag)}`}
-                  className="glass-focus-ring rounded font-mono text-[12.5px] font-medium text-sky-400/90 transition-colors hover:text-sky-300"
-                >
-                  #{tag}
-                </Link>
-              ))}
-            </div>
-          ) : null}
+          {/* Only show extra hashtags below if they are not already written inline inside post.body */}
+          {(() => {
+            const lowerBody = post.body.toLowerCase();
+            const extraTags = post.hashtags
+              .slice(0, 3)
+              .filter((tag) => !lowerBody.includes(`#${tag.toLowerCase()}`));
+            if (extraTags.length === 0) return null;
+            return (
+              <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
+                {extraTags.map((tag) => (
+                  <Link
+                    key={tag}
+                    href={`/search?tag=${encodeURIComponent(tag)}`}
+                    className="glass-focus-ring rounded font-mono text-[12.5px] font-medium text-sky-400/90 transition-colors hover:text-sky-300"
+                  >
+                    #{tag}
+                  </Link>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Centered 5 Post Metrics: Like, Comments, Repost, Bookmarks, Views */}
           <div className="mt-3.5 flex items-center justify-center gap-5 pt-1 sm:gap-7">

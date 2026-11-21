@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Hash, Plus, Send, Trash2, X } from "lucide-react";
+import { FileText, Send, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import { useTelegramMainButton } from "@/components/app/telegram-webapp-provider";
@@ -10,7 +10,6 @@ import {
   GlassAvatar,
   GlassButton,
   GlassCard,
-  GlassInput,
   GlassSelect,
   GlassTextarea,
   useDesignSystem,
@@ -26,8 +25,8 @@ import {
   type PostTypeId,
 } from "@/lib/posts/styles";
 import {
+  extractHashtagsFromBody,
   MAX_HASHTAGS_PER_POST,
-  normalizeHashtag,
 } from "@/lib/validation/posts";
 
 const GUEST_DRAFT_STORAGE_KEY = "avero_guest_draft_v1";
@@ -42,8 +41,6 @@ export default function ComposePage() {
   const [postType, setPostType] = useState<PostTypeId>("note");
   const [commentPolicy, setCommentPolicy] = useState<CommentPolicy>("everyone");
   const [body, setBody] = useState("");
-  const [hashtags, setHashtags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
 
   const [maxPostLength, setMaxPostLength] = useState(1000);
   const [limitInfo, setLimitInfo] = useState<PostLimitInfo | null>(null);
@@ -66,13 +63,9 @@ export default function ComposePage() {
           const parsed = JSON.parse(raw) as {
             postType?: PostTypeId;
             body?: string;
-            hashtags?: string[];
           };
           if (parsed.body) setBody(parsed.body);
           if (parsed.postType) setPostType(parsed.postType);
-          if (Array.isArray(parsed.hashtags)) {
-            setHashtags(parsed.hashtags.slice(0, MAX_HASHTAGS_PER_POST));
-          }
         }
       } catch {
         // Ignore storage errors
@@ -153,53 +146,10 @@ export default function ComposePage() {
     };
   }, []);
 
-  const handleAddHashtag = () => {
-    if (hashtags.length >= MAX_HASHTAGS_PER_POST) {
-      toast({
-        title: `Maksimum ${MAX_HASHTAGS_PER_POST} ta hashtag mumkin`,
-        variant: "warning",
-      });
-      return;
-    }
-    const clean = normalizeHashtag(tagInput);
-    if (!clean) {
-      toast({
-        title: "Hashtag kamida 2 ta harf/raqamdan iborat bo‘lishi kerak",
-        variant: "warning",
-      });
-      return;
-    }
-    if (hashtags.includes(clean)) {
-      setTagInput("");
-      return;
-    }
-    const nextTags = [...hashtags, clean];
-    setHashtags(nextTags);
-    setTagInput("");
-    triggerAutoSave({
-      postType,
-      body,
-      styleConfig: SIMPLE_STYLE_CONFIG,
-      hashtags: nextTags,
-    });
-  };
-
-  const handleRemoveHashtag = (tag: string) => {
-    const nextTags = hashtags.filter((t) => t !== tag);
-    setHashtags(nextTags);
-    triggerAutoSave({
-      postType,
-      body,
-      styleConfig: SIMPLE_STYLE_CONFIG,
-      hashtags: nextTags,
-    });
-  };
-
   const handleResumeDraft = (draft: ServerDraft) => {
     setActiveDraftId(draft.id);
     setPostType(draft.postType);
     setBody(draft.body);
-    setHashtags((draft.hashtags ?? []).slice(0, MAX_HASHTAGS_PER_POST));
     toast({ title: "Qoralama yuklandi", variant: "success" });
   };
 
@@ -219,13 +169,17 @@ export default function ComposePage() {
 
   const publishPost = useCallback(async () => {
     if (!canPublish) return;
+    const inlineTags = extractHashtagsFromBody(trimmed).slice(
+      0,
+      MAX_HASHTAGS_PER_POST
+    );
 
     if (!auth?.user) {
       createLocalFallbackPost({
         postType,
         body: trimmed,
         styleConfig: SIMPLE_STYLE_CONFIG,
-        hashtags,
+        hashtags: inlineTags,
       });
       try {
         window.localStorage.removeItem(GUEST_DRAFT_STORAGE_KEY);
@@ -247,7 +201,7 @@ export default function ComposePage() {
         postType,
         body: trimmed,
         styleConfig: SIMPLE_STYLE_CONFIG,
-        hashtags,
+        hashtags: inlineTags,
         commentPolicy,
         draftId: activeDraftId,
       });
@@ -268,7 +222,6 @@ export default function ComposePage() {
     createLocalFallbackPost,
     postType,
     trimmed,
-    hashtags,
     toast,
     router,
     commentPolicy,
@@ -372,12 +325,12 @@ export default function ComposePage() {
               ]}
             />
 
-            {/* Textarea with Configurable Limit (1000+) */}
+            {/* Textarea: inline #hashtags are automatically detected from text */}
             <GlassTextarea
               label="Post matni"
-              placeholder="Fikringizni yozing..."
+              placeholder="Fikringizni yozing... (#hashtag ham matn ichida yozilaveradi)"
               maxLength={maxPostLength}
-              rows={6}
+              rows={7}
               value={body}
               onChange={(e) => {
                 const nextBody = e.target.value;
@@ -386,7 +339,10 @@ export default function ComposePage() {
                   postType,
                   body: nextBody,
                   styleConfig: SIMPLE_STYLE_CONFIG,
-                  hashtags,
+                  hashtags: extractHashtagsFromBody(nextBody).slice(
+                    0,
+                    MAX_HASHTAGS_PER_POST
+                  ),
                 });
               }}
               hint={
@@ -394,67 +350,6 @@ export default function ComposePage() {
                 "Dastlabki limit: 1000 belgi. Har bir taklif qilgan do‘stingiz uchun +25 belgi qo‘shiladi."
               }
             />
-
-            {/* Hashtags (Max 3, clean borderless inline tags) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] font-medium text-[var(--text-secondary)]">
-                  Hashtaglar (maksimum {MAX_HASHTAGS_PER_POST} ta)
-                </span>
-                <span className="font-mono text-[11.5px] text-[var(--text-muted)]">
-                  {hashtags.length}/{MAX_HASHTAGS_PER_POST}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <GlassInput
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddHashtag();
-                    }
-                  }}
-                  placeholder="Masalan: sheriyat"
-                  aria-label="Hashtag qo‘shish"
-                  leadingIcon={<Hash className="h-4 w-4" />}
-                  disabled={hashtags.length >= MAX_HASHTAGS_PER_POST}
-                />
-                <GlassButton
-                  type="button"
-                  variant="subtle"
-                  size="icon"
-                  aria-label="Hashtag qo‘shish tugmasi"
-                  onClick={handleAddHashtag}
-                  disabled={hashtags.length >= MAX_HASHTAGS_PER_POST}
-                  className="h-11 w-11 shrink-0"
-                >
-                  <Plus className="h-4 w-4" />
-                </GlassButton>
-              </div>
-
-              {hashtags.length > 0 ? (
-                <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-1">
-                  {hashtags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 font-mono text-[13px] font-medium text-sky-400"
-                    >
-                      <span>#{tag}</span>
-                      <button
-                        type="button"
-                        aria-label={`#${tag} ni olib tashlash`}
-                        onClick={() => handleRemoveHashtag(tag)}
-                        className="text-[var(--text-muted)] hover:text-rose-400 cursor-pointer"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
 
             <div className="flex items-center justify-end gap-2.5 border-t border-[var(--border-matte)] pt-4">
               <GlassButton

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Check, ChevronRight, Lock, Send, X } from "lucide-react";
@@ -180,150 +181,163 @@ function MessagesContent() {
             {t.menu.signInPrompt}
           </p>
         </GlassCard>
-      ) : active ? (
-        /* 2. CHAT DETAIL VIEW (when a user row is tapped) */
-        <GlassCard padding="none" className="flex min-h-[68dvh] flex-col overflow-hidden">
-          {/* Chat top bar with Back button + partner profile link */}
-          <div className="flex items-center justify-between gap-2 border-b border-[var(--border-matte)] px-3.5 py-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <button
-                type="button"
-                aria-label="Orqaga"
-                onClick={() => setSelectedId(null)}
-                className="glass-focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--glass-fill-subtle)] hover:text-[var(--text-primary)] cursor-pointer"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-              <Link
-                href={`/u/${encodeURIComponent(active.partner.username)}`}
-                className="flex min-w-0 items-center gap-2.5"
-              >
-                <GlassAvatar
-                  name={active.partner.displayName}
-                  seed={active.partner.username}
-                  avatarId={active.partner.avatarId}
-                  size="sm"
-                />
-                <div className="min-w-0">
-                  <div className="truncate text-[14.5px] font-semibold text-[var(--text-primary)]">
-                    {active.partner.displayName}
-                  </div>
-                  <div className="truncate text-[12px] text-[var(--text-muted)]">
-                    @{active.partner.username}
-                  </div>
-                </div>
-              </Link>
-            </div>
-
-            {active.status === "pending" ? (
-              <span className="shrink-0 text-[11.5px] text-[var(--text-muted)]">
-                So‘rov
-              </span>
-            ) : active.status === "declined" ? (
-              <span className="shrink-0 text-[11.5px] text-[var(--text-muted)]">
-                Rad etilgan
-              </span>
-            ) : null}
-          </div>
-
-          {/* Messages stream */}
-          <div className="flex-1 space-y-2.5 overflow-y-auto px-4 py-4">
-            {active.messages.length === 0 ? (
-              <p className="py-12 text-center text-[13px] text-[var(--text-muted)]">
-                @{active.partner.username} bilan suhbatni boshlang.
-              </p>
-            ) : (
-              active.messages.map((msg) => {
-                const fromMe = msg.senderId === auth.user?.id;
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex ${fromMe ? "justify-end" : "justify-start"}`}
+      ) : active && typeof document !== "undefined" ? (
+        /* 2. FULL-SCREEN CHAT VIEW (Instagram DM style full screen overlay) */
+        createPortal(
+          <div className="fixed inset-0 z-[80] flex flex-col bg-[var(--bg-canvas)]">
+            <div className="mx-auto flex h-full w-full max-w-2xl flex-col">
+              {/* Chat top bar with Back button + partner profile link */}
+              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--border-matte)] px-4 py-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <button
+                    type="button"
+                    aria-label="Orqaga"
+                    onClick={() => setSelectedId(null)}
+                    className="glass-focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--text-primary)] hover:bg-[var(--glass-fill-subtle)] cursor-pointer"
                   >
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed ${
-                        fromMe
-                          ? "bg-[var(--text-primary)] text-[var(--bg-canvas)]"
-                          : "border border-[var(--border-matte)] bg-[var(--surface-input)] text-[var(--text-primary)]"
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap break-words">
-                        {msg.body}
-                      </p>
-                      <span
-                        className={`mt-0.5 block text-right text-[10.5px] ${
-                          fromMe
-                            ? "opacity-70"
-                            : "text-[var(--text-muted)]"
-                        }`}
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  <Link
+                    href={`/u/${encodeURIComponent(active.partner.username)}`}
+                    className="flex min-w-0 items-center gap-2.5"
+                  >
+                    <GlassAvatar
+                      name={active.partner.displayName}
+                      seed={active.partner.username}
+                      avatarId={active.partner.avatarId}
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <div className="truncate text-[15px] font-semibold text-[var(--text-primary)]">
+                        {active.partner.displayName}
+                      </div>
+                      <div className="truncate text-[12px] text-[var(--text-muted)]">
+                        @{active.partner.username}
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+
+                {active.status === "pending" ? (
+                  <span className="shrink-0 text-[11.5px] text-[var(--text-muted)]">
+                    So‘rov
+                  </span>
+                ) : active.status === "declined" ? (
+                  <span className="shrink-0 text-[11.5px] text-[var(--text-muted)]">
+                    Rad etilgan
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Messages stream */}
+              <div className="flex-1 space-y-2.5 overflow-y-auto px-4 py-4">
+                {active.messages.length === 0 ? (
+                  <p className="py-16 text-center text-[13.5px] text-[var(--text-muted)]">
+                    @{active.partner.username} bilan suhbatni boshlang.
+                  </p>
+                ) : (
+                  active.messages.map((msg) => {
+                    const fromMe = msg.senderId === auth.user?.id;
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex ${fromMe ? "justify-end" : "justify-start"}`}
                       >
-                        {formatShortTime(msg.createdAt)}
-                      </span>
+                        <div
+                          className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-[14.5px] leading-relaxed ${
+                            fromMe
+                              ? "bg-[var(--text-primary)] text-[var(--bg-canvas)]"
+                              : "border border-[var(--border-matte)] bg-[var(--surface-input)] text-[var(--text-primary)]"
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap break-words">
+                            {msg.body}
+                          </p>
+                          <span
+                            className={`mt-0.5 block text-right text-[10.5px] ${
+                              fromMe
+                                ? "opacity-70"
+                                : "text-[var(--text-muted)]"
+                            }`}
+                          >
+                            {formatShortTime(msg.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Bottom composer or incoming request bar */}
+              <div
+                style={{
+                  paddingBottom:
+                    "max(0.75rem, env(safe-area-inset-bottom, 0px), var(--tg-safe-bottom, 0px))",
+                }}
+                className="shrink-0 border-t border-[var(--border-matte)] bg-[var(--bg-canvas)] px-4 pt-3"
+              >
+                {active.isIncomingRequest ? (
+                  <div className="space-y-2.5">
+                    <p className="text-[13px] text-[var(--text-secondary)]">
+                      @{active.partner.username} sizga xabar so‘rovi yubordi.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <GlassButton
+                        size="sm"
+                        variant="glass"
+                        onClick={() => void handleRequestAction(active.id, "accept")}
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        Qabul qilish
+                      </GlassButton>
+                      <GlassButton
+                        size="sm"
+                        variant="glass"
+                        className="text-rose-400"
+                        onClick={() => void handleRequestAction(active.id, "decline")}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Rad etish
+                      </GlassButton>
                     </div>
                   </div>
-                );
-              })
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Bottom composer or incoming request bar */}
-          {active.isIncomingRequest ? (
-            <div className="space-y-2.5 border-t border-[var(--border-matte)] px-4 py-3">
-              <p className="text-[12.5px] text-[var(--text-secondary)]">
-                @{active.partner.username} sizga xabar so‘rovi yubordi.
-              </p>
-              <div className="flex items-center gap-2">
-                <GlassButton
-                  size="sm"
-                  variant="glass"
-                  onClick={() => void handleRequestAction(active.id, "accept")}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  Qabul qilish
-                </GlassButton>
-                <GlassButton
-                  size="sm"
-                  variant="glass"
-                  className="text-rose-400"
-                  onClick={() => void handleRequestAction(active.id, "decline")}
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Rad etish
-                </GlassButton>
+                ) : active.status === "declined" ? (
+                  <div className="flex items-center gap-2 py-1 text-[13px] text-[var(--text-muted)]">
+                    <Lock className="h-3.5 w-3.5" />
+                    Ushbu xabar so‘rovi rad etilgan.
+                  </div>
+                ) : canComposeInActive ? (
+                  <form
+                    onSubmit={handleSend}
+                    className="flex items-center gap-2"
+                  >
+                    <GlassInput
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      placeholder="Xabar yozing..."
+                      aria-label="Xabar matni"
+                      maxLength={1000}
+                    />
+                    <GlassButton
+                      type="submit"
+                      variant="glass"
+                      size="icon"
+                      aria-label="Yuborish"
+                      loading={sending}
+                      disabled={!draft.trim()}
+                      className="h-11 w-11 shrink-0"
+                    >
+                      <Send className="h-4 w-4" />
+                    </GlassButton>
+                  </form>
+                ) : null}
               </div>
             </div>
-          ) : active.status === "declined" ? (
-            <div className="flex items-center gap-2 border-t border-[var(--border-matte)] px-4 py-3 text-[12.5px] text-[var(--text-muted)]">
-              <Lock className="h-3.5 w-3.5" />
-              Ushbu xabar so‘rovi rad etilgan.
-            </div>
-          ) : canComposeInActive ? (
-            <form
-              onSubmit={handleSend}
-              className="flex items-center gap-2 border-t border-[var(--border-matte)] px-3.5 py-2.5"
-            >
-              <GlassInput
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Xabar yozing..."
-                aria-label="Xabar matni"
-                maxLength={1000}
-              />
-              <GlassButton
-                type="submit"
-                variant="glass"
-                size="icon"
-                aria-label="Yuborish"
-                loading={sending}
-                disabled={!draft.trim()}
-                className="h-10 w-10 shrink-0"
-              >
-                <Send className="h-4 w-4" />
-              </GlassButton>
-            </form>
-          ) : null}
-        </GlassCard>
+          </div>,
+          document.body
+        )
       ) : threads.length === 0 ? (
         <GlassCard padding="lg" className="text-center space-y-1.5">
           <p className="text-[15px] font-medium text-[var(--text-primary)]">

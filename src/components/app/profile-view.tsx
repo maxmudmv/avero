@@ -6,13 +6,13 @@ import {
   Ban,
   CalendarClock,
   Check,
-  Copy,
   Edit3,
   ExternalLink,
   Link2,
   Lock,
   MessageSquare,
   Plus,
+  Share2,
   Trash2,
   UserCheck,
   UserPlus,
@@ -156,6 +156,17 @@ export function ProfileView({
       : `/u/${profile.username}`;
 
   const handleCopyProfileLink = async () => {
+    try {
+      if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+        await navigator.share({
+          title: `@${profile.username} — Avero`,
+          url: profileShareUrl,
+        });
+        return;
+      }
+    } catch {
+      // Fall back to clipboard if user cancels or share fails
+    }
     try {
       await navigator.clipboard.writeText(profileShareUrl);
       toast({ title: "Profil havolasi nusxalandi", variant: "success" });
@@ -355,13 +366,13 @@ export function ProfileView({
 
           <div className="flex flex-wrap items-center gap-2">
             <GlassButton
-              size="sm"
-              variant="subtle"
-              aria-label="Profil havolasini nusxalash"
+              size="icon"
+              variant="glass"
+              aria-label="Profilni ulashish"
               onClick={() => void handleCopyProfileLink()}
+              className="h-9 w-9"
             >
-              <Copy className="h-3.5 w-3.5" />
-              Havola
+              <Share2 className="h-4 w-4" />
             </GlassButton>
 
             {isOwner && auth?.user ? (
@@ -405,21 +416,23 @@ export function ProfileView({
                   <>
                     <Link
                       href={`/messages?to=${encodeURIComponent(profile.userId)}&username=${encodeURIComponent(profile.username)}&name=${encodeURIComponent(profile.displayName)}`}
-                      className="liquid-glass glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-xl px-3 text-[12.5px] font-medium text-[var(--text-primary)]"
+                      aria-label="Xabar yozish"
+                      className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-primary)]"
                     >
-                      <MessageSquare className="relative z-10 h-3.5 w-3.5" />
-                      <span className="relative z-10">Xabar</span>
+                      <MessageSquare className="relative z-10 h-4 w-4" />
                     </Link>
 
-                    <GlassButton
-                      size="sm"
-                      variant={myBlockLevel === "none" ? "ghost" : "danger"}
+                    <button
+                      type="button"
                       aria-label="Foydalanuvchini bloklash"
                       onClick={() => setBlockModalOpen(true)}
+                      className="glass-focus-ring inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-[12.5px] font-medium text-rose-500 transition-opacity hover:opacity-80 dark:text-rose-400 cursor-pointer"
                     >
-                      <Ban className="h-3.5 w-3.5" />
-                      {myBlockLevel === "none" ? "Cheklash" : "Bloklangan"}
-                    </GlassButton>
+                      <Ban className="h-3.5 w-3.5 text-rose-500 dark:text-rose-400" />
+                      <span>
+                        {myBlockLevel === "none" ? "Bloklash" : "Bloklangan"}
+                      </span>
+                    </button>
                   </>
                 ) : null}
               </>

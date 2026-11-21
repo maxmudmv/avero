@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { FileText, Send, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
-import { useTelegramMainButton } from "@/components/app/telegram-webapp-provider";
 import {
   GlassAvatar,
   GlassButton,
@@ -233,14 +232,6 @@ export default function ComposePage() {
     e.preventDefault();
     await publishPost();
   };
-
-  useTelegramMainButton({
-    text: "Chop etish",
-    visible: canPublish,
-    enabled: canPublish && !publishing,
-    loading: publishing,
-    onClick: () => void publishPost(),
-  });
 
   return (
     <AppShell title="Yozish">

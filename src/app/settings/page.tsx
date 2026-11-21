@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { Ban, Bell, Check, Link2, LogOut, Scale, Send, Shield } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
-import { useTelegramMainButton } from "@/components/app/telegram-webapp-provider";
 import {
   GlassAvatar,
   GlassBadge,
@@ -264,14 +263,6 @@ export default function SettingsPage() {
     }
   };
 
-  useTelegramMainButton({
-    text: "Sozlamalarni saqlash",
-    visible: Boolean(auth?.user),
-    enabled: !saving,
-    loading: saving,
-    onClick: () => void handleSaveSettings(),
-  });
-
   const handleLinkTelegram = async () => {
     if (!consentLink) {
       toast({
@@ -504,7 +495,7 @@ export default function SettingsPage() {
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <a
                 href="/api/v1/auth/google/start"
-                className="liquid-glass glass-focus-ring inline-flex h-10 items-center rounded-2xl px-4 text-[13.5px] font-medium text-[var(--text-primary)]"
+                className="liquid-glass liquid-glass-glare glass-focus-ring inline-flex h-10 items-center rounded-full px-5 text-[13.5px] font-medium text-[var(--text-primary)]"
               >
                 <span className="relative z-10">Google bilan kirish</span>
               </a>

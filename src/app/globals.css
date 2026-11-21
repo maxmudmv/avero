@@ -12,16 +12,24 @@
   initial-value: 224deg;
 }
 
+@property --lg-comet-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes lg-comet-orbit {
+  from {
+    --lg-comet-angle: 0deg;
+  }
+  to {
+    --lg-comet-angle: 360deg;
+  }
+}
+
 :root {
   --lg-angle: 132deg;
   --lg-angle-alt: 224deg;
-  --lg-spot1-x: 12%;
-  --lg-spot1-y: 22%;
-  --lg-spot2-x: 88%;
-  --lg-spot2-y: 82%;
-  --lg-spot3-x: 78%;
-  --lg-spot3-y: 12%;
-  --lg-pulse: 0.94;
 
   /* Default OLED Matte Dark tokens */
   --bg-canvas: #060709;
@@ -43,23 +51,22 @@
   --glass-fill: rgba(14, 16, 22, 0.38);
   --glass-fill-hover: rgba(24, 28, 38, 0.52);
   --glass-fill-subtle: rgba(255, 255, 255, 0.035);
-  --glass-rim-base: rgba(255, 255, 255, 0.16);
-  --glass-rim-dim: rgba(255, 255, 255, 0.05);
+  --glass-rim-base: rgba(255, 255, 255, 0.11);
   --glass-shadow:
     0 10px 28px -12px rgba(0, 0, 0, 0.72),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
   --matte-shadow:
     0 10px 28px -16px rgba(0, 0, 0, 0.7);
 
-  --glare-color: rgba(255, 255, 255, 0.28);
-  --focus-ring: rgba(125, 211, 252, 0.5);
+  /* Pure white orbiting comet beam with fading tail on dark canvas */
+  --beam-head: rgba(255, 255, 255, 0.96);
+  --beam-tail-1: rgba(255, 255, 255, 0.62);
+  --beam-tail-2: rgba(255, 255, 255, 0.3);
+  --beam-tail-3: rgba(255, 255, 255, 0.11);
+  --beam-tail-4: rgba(255, 255, 255, 0.025);
 
-  /* Chromatic prism refraction colors for active glass rims */
-  --prism-white: rgba(255, 255, 255, 0.98);
-  --prism-cyan: rgba(96, 214, 255, 0.92);
-  --prism-violet: rgba(212, 134, 255, 0.86);
-  --prism-gold: rgba(255, 206, 118, 0.86);
-  --prism-mint: rgba(112, 242, 220, 0.82);
+  --glare-color: rgba(255, 255, 255, 0.24);
+  --focus-ring: rgba(255, 255, 255, 0.35);
 
   --font-sans: "Inter Variable", "Inter", "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-display: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Inter Variable", system-ui, sans-serif;
@@ -75,32 +82,32 @@
     --surface-input: rgba(255, 255, 255, 0.78);
     --surface-backdrop: rgba(15, 23, 42, 0.28);
 
-    --border-matte: rgba(15, 23, 42, 0.065);
-    --border-matte-hover: rgba(15, 23, 42, 0.13);
+    --border-matte: rgba(15, 23, 42, 0.07);
+    --border-matte-hover: rgba(15, 23, 42, 0.14);
 
     --text-primary: #0b0e14;
     --text-secondary: rgba(15, 23, 42, 0.66);
     --text-muted: rgba(15, 23, 42, 0.45);
 
-    --glass-fill: rgba(255, 255, 255, 0.36);
-    --glass-fill-hover: rgba(255, 255, 255, 0.56);
+    --glass-fill: rgba(255, 255, 255, 0.42);
+    --glass-fill-hover: rgba(255, 255, 255, 0.62);
     --glass-fill-subtle: rgba(15, 23, 42, 0.04);
-    --glass-rim-base: rgba(15, 23, 42, 0.14);
-    --glass-rim-dim: rgba(15, 23, 42, 0.04);
+    --glass-rim-base: rgba(11, 14, 20, 0.11);
     --glass-shadow:
       0 10px 26px -12px rgba(15, 23, 42, 0.14),
       inset 0 1px 0 0 rgba(255, 255, 255, 0.75);
     --matte-shadow:
       0 8px 24px -14px rgba(15, 23, 42, 0.08);
 
-    --glare-color: rgba(255, 255, 255, 0.72);
-    --focus-ring: rgba(56, 189, 248, 0.5);
+    /* Pure black orbiting comet beam with fading tail on light canvas */
+    --beam-head: rgba(11, 14, 20, 0.92);
+    --beam-tail-1: rgba(11, 14, 20, 0.56);
+    --beam-tail-2: rgba(11, 14, 20, 0.26);
+    --beam-tail-3: rgba(11, 14, 20, 0.09);
+    --beam-tail-4: rgba(11, 14, 20, 0.02);
 
-    --prism-white: rgba(255, 255, 255, 0.96);
-    --prism-cyan: rgba(56, 189, 248, 0.85);
-    --prism-violet: rgba(168, 85, 247, 0.72);
-    --prism-gold: rgba(245, 158, 11, 0.72);
-    --prism-mint: rgba(20, 184, 166, 0.75);
+    --glare-color: rgba(11, 14, 20, 0.1);
+    --focus-ring: rgba(11, 14, 20, 0.35);
   }
 }
 
@@ -112,32 +119,32 @@
   --surface-input: rgba(255, 255, 255, 0.78);
   --surface-backdrop: rgba(15, 23, 42, 0.28);
 
-  --border-matte: rgba(15, 23, 42, 0.065);
-  --border-matte-hover: rgba(15, 23, 42, 0.13);
+  --border-matte: rgba(15, 23, 42, 0.07);
+  --border-matte-hover: rgba(15, 23, 42, 0.14);
 
   --text-primary: #0b0e14;
   --text-secondary: rgba(15, 23, 42, 0.66);
   --text-muted: rgba(15, 23, 42, 0.45);
 
-  --glass-fill: rgba(255, 255, 255, 0.36);
-  --glass-fill-hover: rgba(255, 255, 255, 0.56);
+  --glass-fill: rgba(255, 255, 255, 0.42);
+  --glass-fill-hover: rgba(255, 255, 255, 0.62);
   --glass-fill-subtle: rgba(15, 23, 42, 0.04);
-  --glass-rim-base: rgba(15, 23, 42, 0.14);
-  --glass-rim-dim: rgba(15, 23, 42, 0.04);
+  --glass-rim-base: rgba(11, 14, 20, 0.11);
   --glass-shadow:
     0 10px 26px -12px rgba(15, 23, 42, 0.14),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.75);
   --matte-shadow:
     0 8px 24px -14px rgba(15, 23, 42, 0.08);
 
-  --glare-color: rgba(255, 255, 255, 0.72);
-  --focus-ring: rgba(56, 189, 248, 0.5);
+  /* Pure black orbiting comet beam with fading tail on light canvas */
+  --beam-head: rgba(11, 14, 20, 0.92);
+  --beam-tail-1: rgba(11, 14, 20, 0.56);
+  --beam-tail-2: rgba(11, 14, 20, 0.26);
+  --beam-tail-3: rgba(11, 14, 20, 0.09);
+  --beam-tail-4: rgba(11, 14, 20, 0.02);
 
-  --prism-white: rgba(255, 255, 255, 0.96);
-  --prism-cyan: rgba(56, 189, 248, 0.85);
-  --prism-violet: rgba(168, 85, 247, 0.72);
-  --prism-gold: rgba(245, 158, 11, 0.72);
-  --prism-mint: rgba(20, 184, 166, 0.75);
+  --glare-color: rgba(11, 14, 20, 0.1);
+  --focus-ring: rgba(11, 14, 20, 0.35);
 }
 
 html {
@@ -167,38 +174,30 @@ body {
     box-shadow: var(--matte-shadow);
   }
 
-  /* --- Quiet Frosted Glass (delicate thin hairline, for panels/tabs) --- */
+  /* --- Quiet Frosted Glass (delicate thin hairline, for panels/sheets) --- */
   .liquid-glass-quiet {
-    background-color: rgba(16, 18, 26, 0.78);
+    background-color: rgba(16, 18, 26, 0.82);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    -webkit-backdrop-filter: blur(24px) saturate(175%);
-    backdrop-filter: blur(24px) saturate(175%);
+    -webkit-backdrop-filter: blur(24px) saturate(165%);
+    backdrop-filter: blur(24px) saturate(165%);
     box-shadow: 0 18px 44px -16px rgba(0, 0, 0, 0.82);
   }
 
-  /* --- Living Prismatic Liquid Glass (Buttons & Floating Bottom Dock) --- */
+  /* --- Monochrome Transparent Glass with Slow Comet-Tail Rim (Buttons & Bottom Dock) --- */
   .liquid-glass {
     position: relative;
     isolation: isolate;
     background-color: var(--glass-fill);
-    background-image: linear-gradient(
-      var(--lg-angle-alt),
-      rgba(255, 255, 255, 0.07) 0%,
-      rgba(160, 215, 255, 0.02) 38%,
-      rgba(255, 255, 255, 0.005) 64%,
-      rgba(210, 175, 255, 0.04) 100%
-    );
-    -webkit-backdrop-filter: blur(20px) saturate(185%);
-    backdrop-filter: blur(20px) saturate(185%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
     box-shadow: var(--glass-shadow);
     will-change: transform;
   }
 
   /*
-   * Multi-spot organic caustic prismatic rim:
-   * 3 independent non-spinning Lissajous light pockets + subtle iridescent
-   * chromatic refraction (white, cyan, violet, gold, mint) gliding & breathing
-   * organically along the pill curves instead of looping in a flat circle.
+   * Slow monochrome orbiting comet border:
+   * - Dark theme: crisp white head with long smoothly fading white tail
+   * - Light theme: crisp black head with long smoothly fading black tail
    */
   .liquid-glass::before {
     content: "";
@@ -206,36 +205,20 @@ body {
     inset: 0;
     border-radius: inherit;
     padding: 1.5px;
-    opacity: var(--lg-pulse, 0.94);
     background-image:
-      radial-gradient(
-        62% 130% at var(--lg-spot1-x) var(--lg-spot1-y),
-        var(--prism-white) 0%,
-        var(--prism-cyan) 24%,
-        rgba(96, 165, 250, 0.25) 48%,
-        transparent 72%
+      conic-gradient(
+        from var(--lg-comet-angle) at 50% 50%,
+        transparent 0deg,
+        transparent 165deg,
+        var(--beam-tail-4) 205deg,
+        var(--beam-tail-3) 252deg,
+        var(--beam-tail-2) 296deg,
+        var(--beam-tail-1) 334deg,
+        var(--beam-head) 354deg,
+        transparent 360deg
       ),
-      radial-gradient(
-        58% 125% at var(--lg-spot2-x) var(--lg-spot2-y),
-        var(--prism-white) 0%,
-        var(--prism-gold) 20%,
-        var(--prism-violet) 40%,
-        rgba(96, 214, 255, 0.22) 58%,
-        transparent 76%
-      ),
-      radial-gradient(
-        48% 115% at var(--lg-spot3-x) var(--lg-spot3-y),
-        var(--prism-white) 0%,
-        var(--prism-mint) 26%,
-        rgba(180, 145, 255, 0.24) 48%,
-        transparent 72%
-      ),
-      linear-gradient(
-        var(--lg-angle),
-        var(--glass-rim-base) 0%,
-        var(--glass-rim-dim) 44%,
-        var(--glass-rim-base) 100%
-      );
+      linear-gradient(var(--glass-rim-base), var(--glass-rim-base));
+    animation: lg-comet-orbit 8.5s linear infinite;
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
@@ -248,35 +231,9 @@ body {
     z-index: 1;
   }
 
-  /* Independent phase mirror on adjacent sibling buttons so side-by-side buttons shimmer distinctly */
+  /* Offset phase on adjacent sibling buttons so neighboring beams orbit gracefully out of phase */
   .liquid-glass:nth-of-type(even)::before {
-    background-image:
-      radial-gradient(
-        58% 125% at calc(100% - var(--lg-spot2-x)) calc(100% - var(--lg-spot1-y)),
-        var(--prism-white) 0%,
-        var(--prism-violet) 22%,
-        var(--prism-cyan) 44%,
-        transparent 74%
-      ),
-      radial-gradient(
-        60% 130% at calc(100% - var(--lg-spot1-x)) var(--lg-spot3-y),
-        var(--prism-white) 0%,
-        var(--prism-gold) 22%,
-        var(--prism-mint) 44%,
-        transparent 72%
-      ),
-      radial-gradient(
-        48% 115% at var(--lg-spot3-x) calc(100% - var(--lg-spot2-y)),
-        var(--prism-white) 0%,
-        var(--prism-cyan) 28%,
-        transparent 70%
-      ),
-      linear-gradient(
-        var(--lg-angle-alt),
-        var(--glass-rim-base) 0%,
-        var(--glass-rim-dim) 50%,
-        var(--glass-rim-base) 100%
-      );
+    animation-delay: -4.25s;
   }
 
   /* Radial pointer/touch glare layer */
@@ -320,7 +277,7 @@ body {
 }
 
 :root[data-theme="light"] .liquid-glass-quiet {
-  background-color: rgba(255, 255, 255, 0.86);
+  background-color: rgba(255, 255, 255, 0.88);
   border-color: rgba(15, 23, 42, 0.08);
   box-shadow: 0 16px 38px -16px rgba(15, 23, 42, 0.16);
 }
@@ -334,7 +291,7 @@ body {
     );
   }
   :root:not([data-theme="dark"]) .liquid-glass-quiet {
-    background-color: rgba(255, 255, 255, 0.86);
+    background-color: rgba(255, 255, 255, 0.88);
     border-color: rgba(15, 23, 42, 0.08);
     box-shadow: 0 16px 38px -16px rgba(15, 23, 42, 0.16);
   }
@@ -342,8 +299,8 @@ body {
 
 /* Low-power / mobile device optimization */
 :root[data-perf-tier="eco"] .liquid-glass {
-  -webkit-backdrop-filter: blur(14px) saturate(165%);
-  backdrop-filter: blur(14px) saturate(165%);
+  -webkit-backdrop-filter: blur(14px) saturate(145%);
+  backdrop-filter: blur(14px) saturate(145%);
 }
 
 /* Hide scrollbar for single-row horizontal filter pills */
@@ -358,6 +315,7 @@ body {
 /* Reduced motion & reduced transparency accessibility */
 @media (prefers-reduced-motion: reduce) {
   .liquid-glass,
+  .liquid-glass::before,
   .liquid-glass-glare::after,
   body {
     transition: none !important;

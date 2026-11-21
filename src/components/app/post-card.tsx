@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import {
   GlassAvatar,
-  GlassBadge,
   GlassButton,
   GlassCard,
   GlassDropdown,
@@ -40,7 +39,6 @@ import {
 } from "@/lib/api-client";
 import { COMMENT_REPORT_REASONS } from "@/lib/validation/social";
 import {
-  getPostStyleClasses,
   getPostTypeLabel,
   POST_TYPES,
   type PostTypeId,
@@ -167,8 +165,6 @@ export const PostCard = React.memo(function PostCard({
     auth?.user?.id &&
       (auth.user.id === post.authorId || post.id.startsWith("local_"))
   );
-
-  const styleClasses = getPostStyleClasses(post.styleConfig);
 
   const openComments = async () => {
     setCommentsOpen(true);
@@ -484,10 +480,10 @@ export const PostCard = React.memo(function PostCard({
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <GlassBadge variant="matte">
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="text-[11.5px] font-medium text-[var(--text-muted)]">
                   {getPostTypeLabel(post.postType)}
-                </GlassBadge>
+                </span>
                 <GlassDropdown
                   ariaLabel="Post amallari"
                   trigger={
@@ -500,26 +496,24 @@ export const PostCard = React.memo(function PostCard({
               </div>
             </div>
 
-            {/* Pure CSS Styled Text Body */}
-            <div className={cn("mt-2.5", styleClasses.containerClass)}>
-              <p
-                className={cn(
-                  "whitespace-pre-wrap break-words text-[15px] leading-[1.65]",
-                  styleClasses.textClass
-                )}
-              >
-                {renderTextWithMentions(post.body)}
-              </p>
-            </div>
+            {/* Clean Pure-Text Body (no template boxes or borders) */}
+            <p
+              className={cn(
+                "mt-2 whitespace-pre-wrap break-words text-[15px] leading-[1.68] text-[var(--text-primary)]",
+                post.postType === "poem" && "italic"
+              )}
+            >
+              {renderTextWithMentions(post.body)}
+            </p>
 
-            {/* Clickable Hashtags (max 3) */}
+            {/* Clean Borderless Inline Hashtags (max 3) */}
             {post.hashtags.length > 0 ? (
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
+              <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
                 {post.hashtags.slice(0, 3).map((tag) => (
                   <Link
                     key={tag}
                     href={`/search?tag=${encodeURIComponent(tag)}`}
-                    className="glass-focus-ring rounded-full border border-[var(--border-matte)] bg-[var(--glass-fill-subtle)] px-2.5 py-0.5 font-mono text-[11.5px] text-sky-500 hover:text-sky-400 dark:text-sky-300"
+                    className="glass-focus-ring rounded font-mono text-[12.5px] font-medium text-sky-400/90 transition-colors hover:text-sky-300"
                   >
                     #{tag}
                   </Link>
@@ -528,8 +522,8 @@ export const PostCard = React.memo(function PostCard({
             ) : null}
 
             {/* 5 Post Metrics: Like, Comments, Repost, Bookmarks, Views (borderless, fill-only icons) */}
-            <div className="mt-3.5 flex items-center justify-between gap-2 pt-1">
-              <div className="flex items-center gap-3 sm:gap-4">
+            <div className="mt-3 flex items-center justify-between gap-2 pt-1">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <button
                   type="button"
                   aria-label="Yoqtirish"

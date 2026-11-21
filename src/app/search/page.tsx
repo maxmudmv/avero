@@ -2,7 +2,7 @@
 
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Hash, Search as SearchIcon, ShieldCheck, UserPlus, X } from "lucide-react";
+import { Search as SearchIcon, ShieldCheck, UserPlus, X } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppState } from "@/components/app/app-state-provider";
 import { PostCard } from "@/components/app/post-card";
@@ -178,18 +178,17 @@ function SearchContent() {
           <h2 className="px-1 text-[12.5px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             Hashtaglar
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 px-1">
             {results.hashtags.map((h) => (
               <button
                 key={h.id}
                 type="button"
                 onClick={() => router.push(`/search?tag=${encodeURIComponent(h.tag)}`)}
-                className="liquid-glass glass-focus-ring inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-mono text-[12.5px] text-[var(--text-primary)] cursor-pointer"
+                className="glass-focus-ring inline-flex items-center gap-1 rounded-md font-mono text-[13px] font-medium text-sky-400/90 transition-colors hover:text-sky-300 cursor-pointer"
               >
-                <Hash className="relative z-10 h-3.5 w-3.5 text-sky-400" />
-                <span className="relative z-10">{h.tag}</span>
-                <span className="relative z-10 text-[11px] text-[var(--text-muted)]">
-                  ({h.postsCount})
+                <span>#{h.tag}</span>
+                <span className="text-[11.5px] font-normal text-[var(--text-muted)]">
+                  {h.postsCount}
                 </span>
               </button>
             ))}

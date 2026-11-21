@@ -71,6 +71,28 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
     setMounted(true);
   }, []);
 
+  // Show a friendly toast when redirected from an unconfigured/failed OAuth flow
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const authError = url.searchParams.get("auth_error");
+    if (!authError) return;
+    if (authError === "google_not_configured") {
+      toast({
+        title: "Google orqali kirish hali ulanmagan",
+        description: "Hozircha Telegram orqali kirishingiz mumkin.",
+        variant: "warning",
+      });
+    } else {
+      toast({
+        title: "Kirishda xatolik yuz berdi",
+        variant: "error",
+      });
+    }
+    url.searchParams.delete("auth_error");
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+  }, [toast]);
+
   const publicEnv = getPublicEnv();
   const telegramBotUsername =
     publicEnv.TELEGRAM_BOT_USERNAME || "averoappbot";

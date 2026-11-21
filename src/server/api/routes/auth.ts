@@ -87,6 +87,12 @@ authRoutes.get(
       return c.redirect(authorizationUrl, 302);
     } catch (err) {
       if (err instanceof GoogleOAuthError) {
+        const accept = c.req.header("accept") ?? "";
+        if (accept.includes("text/html")) {
+          const fallbackUrl = new URL(env.APP_URL);
+          fallbackUrl.searchParams.set("auth_error", err.code.toLowerCase());
+          return c.redirect(fallbackUrl.toString(), 302);
+        }
         return c.json(
           {
             ok: false,

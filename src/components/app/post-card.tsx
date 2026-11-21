@@ -39,7 +39,6 @@ import {
 } from "@/lib/api-client";
 import { COMMENT_REPORT_REASONS } from "@/lib/validation/social";
 import {
-  getPostTypeLabel,
   POST_TYPES,
   type PostTypeId,
 } from "@/lib/posts/styles";
@@ -437,193 +436,187 @@ export const PostCard = React.memo(function PostCard({
   return (
     <div ref={cardRef}>
       <GlassCard interactive padding="md">
-        <div className="flex items-start gap-3">
-          <Link
-            href={`/u/${encodeURIComponent(post.authorUsername)}`}
-            aria-label={`@${post.authorUsername} profili`}
-            className="glass-focus-ring rounded-full"
-          >
-            <GlassAvatar
-              name={post.authorDisplayName}
-              seed={post.authorUsername}
-              avatarId={post.authorAvatarId}
-              size="md"
-            />
-          </Link>
-
-          <div className="min-w-0 flex-1">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Link
-                    href={`/u/${encodeURIComponent(post.authorUsername)}`}
-                    className="truncate font-mono text-[14px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] hover:underline"
-                  >
-                    @{post.authorUsername}
-                  </Link>
-                  {post.authorVerified ? (
-                    <ShieldCheck
-                      aria-label="Tasdiqlangan"
-                      className="h-3.5 w-3.5 shrink-0 text-sky-400"
-                    />
-                  ) : null}
-                  <span className="text-[12px] text-[var(--text-muted)]">·</span>
-                  <span className="text-[12px] text-[var(--text-muted)]">
-                    {formatRelativeTime(post.createdAt)}
-                  </span>
-                  {post.isEdited ? (
-                    <span className="text-[11px] text-[var(--text-muted)]">
-                      (tahrirlangan)
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-1.5">
-                <span className="text-[11.5px] font-medium text-[var(--text-muted)]">
-                  {getPostTypeLabel(post.postType)}
-                </span>
-                <GlassDropdown
-                  ariaLabel="Post amallari"
-                  trigger={
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--glass-fill-subtle)] hover:text-[var(--text-primary)]">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </span>
-                  }
-                  items={dropdownItems}
+        <div className="min-w-0">
+          {/* Compact Header: Smaller Avatar + @username + Time + Actions Menu */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Link
+                href={`/u/${encodeURIComponent(post.authorUsername)}`}
+                aria-label={`@${post.authorUsername} profili`}
+                className="glass-focus-ring shrink-0 rounded-full"
+              >
+                <GlassAvatar
+                  name={post.authorDisplayName}
+                  seed={post.authorUsername}
+                  avatarId={post.authorAvatarId}
+                  size="xs"
+                  className="h-8 w-8"
                 />
+              </Link>
+
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <Link
+                  href={`/u/${encodeURIComponent(post.authorUsername)}`}
+                  className="truncate font-mono text-[13.5px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] hover:underline"
+                >
+                  @{post.authorUsername}
+                </Link>
+                {post.authorVerified ? (
+                  <ShieldCheck
+                    aria-label="Tasdiqlangan"
+                    className="h-3.5 w-3.5 shrink-0 text-sky-400"
+                  />
+                ) : null}
+                <span className="text-[12px] text-[var(--text-muted)]">·</span>
+                <span className="text-[12px] text-[var(--text-muted)]">
+                  {formatRelativeTime(post.createdAt)}
+                </span>
+                {post.isEdited ? (
+                  <span className="text-[11px] text-[var(--text-muted)]">
+                    (tahrirlangan)
+                  </span>
+                ) : null}
               </div>
             </div>
 
-            {/* Clean Pure-Text Body (no template boxes or borders) */}
-            <p
+            <div className="flex shrink-0 items-center">
+              <GlassDropdown
+                ariaLabel="Post amallari"
+                trigger={
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--glass-fill-subtle)] hover:text-[var(--text-primary)]">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </span>
+                }
+                items={dropdownItems}
+              />
+            </div>
+          </div>
+
+          {/* Full-Width Pure-Text Body aligned flush with Avatar left edge */}
+          <p
+            className={cn(
+              "mt-3 whitespace-pre-wrap break-words text-[15px] leading-[1.68] text-[var(--text-primary)]",
+              post.postType === "poem" && "italic"
+            )}
+          >
+            {renderTextWithMentions(post.body)}
+          </p>
+
+          {/* Clean Borderless Inline Hashtags aligned flush left */}
+          {post.hashtags.length > 0 ? (
+            <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
+              {post.hashtags.slice(0, 3).map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/search?tag=${encodeURIComponent(tag)}`}
+                  className="glass-focus-ring rounded font-mono text-[12.5px] font-medium text-sky-400/90 transition-colors hover:text-sky-300"
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Centered 5 Post Metrics: Like, Comments, Repost, Bookmarks, Views */}
+          <div className="mt-3.5 flex items-center justify-center gap-5 pt-1 sm:gap-7">
+            <button
+              type="button"
+              aria-label="Yoqtirish"
+              aria-pressed={post.likedByMe}
+              onClick={() => {
+                triggerHapticImpact("light");
+                void toggleReaction(post.id, "like");
+              }}
               className={cn(
-                "mt-2 whitespace-pre-wrap break-words text-[15px] leading-[1.68] text-[var(--text-primary)]",
-                post.postType === "poem" && "italic"
+                "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
+                post.likedByMe
+                  ? "text-rose-500"
+                  : "hover:text-[var(--text-primary)]"
               )}
             >
-              {renderTextWithMentions(post.body)}
-            </p>
-
-            {/* Clean Borderless Inline Hashtags (max 3) */}
-            {post.hashtags.length > 0 ? (
-              <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
-                {post.hashtags.slice(0, 3).map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/search?tag=${encodeURIComponent(tag)}`}
-                    className="glass-focus-ring rounded font-mono text-[12.5px] font-medium text-sky-400/90 transition-colors hover:text-sky-300"
-                  >
-                    #{tag}
-                  </Link>
-                ))}
-              </div>
-            ) : null}
-
-            {/* 5 Post Metrics: Like, Comments, Repost, Bookmarks, Views (borderless, fill-only icons) */}
-            <div className="mt-3 flex items-center justify-between gap-2 pt-1">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <button
-                  type="button"
-                  aria-label="Yoqtirish"
-                  aria-pressed={post.likedByMe}
-                  onClick={() => {
-                    triggerHapticImpact("light");
-                    void toggleReaction(post.id, "like");
-                  }}
-                  className={cn(
-                    "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
-                    post.likedByMe
-                      ? "text-rose-500"
-                      : "hover:text-[var(--text-primary)]"
-                  )}
-                >
-                  <Heart
-                    className={cn(
-                      "h-[18px] w-[18px] transition-transform duration-150",
-                      post.likedByMe && "scale-105 fill-current"
-                    )}
-                  />
-                  <span className="font-mono text-[12px] tabular-nums">
-                    {post.likesCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  aria-label="Izohlar"
-                  onClick={() => void openComments()}
-                  className="glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 hover:text-[var(--text-primary)] active:scale-90 cursor-pointer"
-                >
-                  <MessageCircle className="h-[18px] w-[18px]" />
-                  <span className="font-mono text-[12px] tabular-nums">
-                    {post.commentsCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  aria-label="Repost"
-                  aria-pressed={post.repostedByMe}
-                  onClick={() => {
-                    triggerHapticImpact("light");
-                    setRepostOpen(true);
-                  }}
-                  className={cn(
-                    "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
-                    post.repostedByMe
-                      ? "text-emerald-400"
-                      : "hover:text-[var(--text-primary)]"
-                  )}
-                >
-                  <Repeat2 className="h-[18px] w-[18px]" />
-                  <span className="font-mono text-[12px] tabular-nums">
-                    {post.repostsCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  aria-label="Saqlashlar"
-                  aria-pressed={post.bookmarkedByMe}
-                  onClick={() => {
-                    triggerHapticImpact("light");
-                    void toggleReaction(post.id, "bookmark");
-                    toast({
-                      title: post.bookmarkedByMe
-                        ? "Saqlanganlardan olib tashlandi"
-                        : "Saqlanganlarga qo‘shildi",
-                      variant: "success",
-                    });
-                  }}
-                  className={cn(
-                    "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
-                    post.bookmarkedByMe
-                      ? "text-sky-400"
-                      : "hover:text-[var(--text-primary)]"
-                  )}
-                >
-                  <Bookmark
-                    className={cn(
-                      "h-[18px] w-[18px] transition-transform duration-150",
-                      post.bookmarkedByMe && "scale-105 fill-current"
-                    )}
-                  />
-                  <span className="font-mono text-[12px] tabular-nums">
-                    {post.bookmarksCount}
-                  </span>
-                </button>
-              </div>
-
-              <span
-                aria-label={`${localViews} marta ko‘rildi`}
-                className="inline-flex shrink-0 items-center gap-1 font-mono text-[11.5px] tabular-nums text-[var(--text-muted)]"
-              >
-                <Eye className="h-3.5 w-3.5" />
-                {localViews}
+              <Heart
+                className={cn(
+                  "h-[18px] w-[18px] transition-transform duration-150",
+                  post.likedByMe && "scale-105 fill-current"
+                )}
+              />
+              <span className="font-mono text-[12px] tabular-nums">
+                {post.likesCount}
               </span>
-            </div>
+            </button>
+
+            <button
+              type="button"
+              aria-label="Izohlar"
+              onClick={() => void openComments()}
+              className="glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 hover:text-[var(--text-primary)] active:scale-90 cursor-pointer"
+            >
+              <MessageCircle className="h-[18px] w-[18px]" />
+              <span className="font-mono text-[12px] tabular-nums">
+                {post.commentsCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              aria-label="Repost"
+              aria-pressed={post.repostedByMe}
+              onClick={() => {
+                triggerHapticImpact("light");
+                setRepostOpen(true);
+              }}
+              className={cn(
+                "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
+                post.repostedByMe
+                  ? "text-emerald-400"
+                  : "hover:text-[var(--text-primary)]"
+              )}
+            >
+              <Repeat2 className="h-[18px] w-[18px]" />
+              <span className="font-mono text-[12px] tabular-nums">
+                {post.repostsCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              aria-label="Saqlashlar"
+              aria-pressed={post.bookmarkedByMe}
+              onClick={() => {
+                triggerHapticImpact("light");
+                void toggleReaction(post.id, "bookmark");
+                toast({
+                  title: post.bookmarkedByMe
+                    ? "Saqlanganlardan olib tashlandi"
+                    : "Saqlanganlarga qo‘shildi",
+                  variant: "success",
+                });
+              }}
+              className={cn(
+                "glass-focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg px-1 text-[var(--text-secondary)] transition-all duration-150 active:scale-90 cursor-pointer",
+                post.bookmarkedByMe
+                  ? "text-sky-400"
+                  : "hover:text-[var(--text-primary)]"
+              )}
+            >
+              <Bookmark
+                className={cn(
+                  "h-[18px] w-[18px] transition-transform duration-150",
+                  post.bookmarkedByMe && "scale-105 fill-current"
+                )}
+              />
+              <span className="font-mono text-[12px] tabular-nums">
+                {post.bookmarksCount}
+              </span>
+            </button>
+
+            <span
+              aria-label={`${localViews} marta ko‘rildi`}
+              className="inline-flex shrink-0 items-center gap-1 font-mono text-[11.5px] tabular-nums text-[var(--text-muted)]"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              {localViews}
+            </span>
           </div>
         </div>
       </GlassCard>

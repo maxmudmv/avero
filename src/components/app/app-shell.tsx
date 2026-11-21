@@ -267,8 +267,8 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
     ? "menu"
     : pathname === "/search"
       ? "search"
-      : pathname === "/compose"
-        ? "compose"
+      : pathname === "/messages"
+        ? "messages"
         : pathname === "/"
           ? "feed"
           : "menu";
@@ -333,12 +333,12 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
       },
     },
     {
-      id: "compose",
-      label: t.nav.compose,
-      icon: Feather,
+      id: "messages",
+      label: t.menu.messages,
+      icon: MessageSquare,
       onPress: () => {
         setMenuOpen(false);
-        router.push("/compose");
+        router.push("/messages");
       },
     },
     {
@@ -389,10 +389,10 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
       icon: Bookmark,
     },
     {
-      href: "/messages",
-      label: t.menu.messages,
-      description: t.menu.messagesDesc,
-      icon: MessageSquare,
+      href: "/compose",
+      label: t.nav.compose,
+      description: t.compose.newPost,
+      icon: Feather,
     },
     {
       href: "/settings",

@@ -919,8 +919,8 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                             className={cn(
                               "glass-focus-ring relative flex flex-col items-start gap-2 rounded-2xl p-3 text-left transition-colors cursor-pointer",
                               isCurrent
-                                ? "bg-white/[0.08] text-[var(--text-primary)]"
-                                : "text-[var(--text-primary)] hover:bg-white/[0.04]"
+                                ? "bg-[var(--glass-fill-subtle)] text-[var(--text-primary)]"
+                                : "text-[var(--text-primary)] hover:bg-[var(--glass-fill-subtle)]"
                             )}
                           >
                             <div className="relative z-10 flex w-full items-center justify-between">
@@ -986,7 +986,7 @@ export function AppShell({ title = "Avero", topAction, children }: AppShellProps
                     layoutId="avero-bottom-dock-capsule"
                     transition={LIQUID_TAB_SPRING}
                     aria-hidden="true"
-                    className="liquid-comet-rim absolute inset-0 rounded-[22px] bg-white/[0.06]"
+                    className="liquid-comet-rim absolute inset-0 rounded-[22px] bg-[var(--glass-fill-subtle)]"
                   />
                 ) : null}
                 <Icon

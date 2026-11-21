@@ -109,7 +109,7 @@ export function TelegramWebAppProvider({
   // Match Telegram native top bar & background to OLED Matte / Pearl Light
   useEffect(() => {
     if (!webApp) return;
-    const bgHex = resolvedTheme === "light" ? "#f2f4f8" : "#060709";
+    const bgHex = resolvedTheme === "light" ? "#e4e6eb" : "#060709";
     try {
       webApp.setHeaderColor?.(bgHex);
       webApp.setBackgroundColor?.(bgHex);

@@ -75,76 +75,76 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --bg-canvas: #f2f4f8;
-    --bg-elevated: #f8f9fc;
-    --surface-matte: rgba(255, 255, 255, 0.88);
-    --surface-matte-hover: rgba(255, 255, 255, 0.96);
-    --surface-input: rgba(255, 255, 255, 0.78);
-    --surface-backdrop: rgba(15, 23, 42, 0.28);
+    --bg-canvas: #e4e6eb;
+    --bg-elevated: #eceef3;
+    --surface-matte: #f6f7f9;
+    --surface-matte-hover: #fbfcfd;
+    --surface-input: #eceef3;
+    --surface-backdrop: rgba(15, 23, 42, 0.34);
 
-    --border-matte: rgba(15, 23, 42, 0.07);
-    --border-matte-hover: rgba(15, 23, 42, 0.14);
+    --border-matte: rgba(15, 23, 42, 0.11);
+    --border-matte-hover: rgba(15, 23, 42, 0.22);
 
-    --text-primary: #0b0e14;
-    --text-secondary: rgba(15, 23, 42, 0.66);
-    --text-muted: rgba(15, 23, 42, 0.45);
+    --text-primary: #0f141c;
+    --text-secondary: rgba(15, 20, 28, 0.72);
+    --text-muted: rgba(15, 20, 28, 0.52);
 
-    --glass-fill: rgba(255, 255, 255, 0.42);
-    --glass-fill-hover: rgba(255, 255, 255, 0.62);
-    --glass-fill-subtle: rgba(15, 23, 42, 0.04);
-    --glass-rim-base: rgba(11, 14, 20, 0.11);
+    --glass-fill: rgba(246, 247, 249, 0.85);
+    --glass-fill-hover: rgba(251, 252, 253, 0.96);
+    --glass-fill-subtle: rgba(15, 23, 42, 0.06);
+    --glass-rim-base: rgba(15, 20, 28, 0.16);
     --glass-shadow:
-      0 10px 26px -12px rgba(15, 23, 42, 0.14),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.75);
+      0 8px 22px -10px rgba(15, 23, 42, 0.14),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.65);
     --matte-shadow:
-      0 8px 24px -14px rgba(15, 23, 42, 0.08);
+      0 6px 20px -10px rgba(15, 23, 42, 0.11);
 
     /* Pure black orbiting comet beam with fading tail on light canvas */
-    --beam-head: rgba(11, 14, 20, 0.92);
-    --beam-tail-1: rgba(11, 14, 20, 0.56);
-    --beam-tail-2: rgba(11, 14, 20, 0.26);
-    --beam-tail-3: rgba(11, 14, 20, 0.09);
-    --beam-tail-4: rgba(11, 14, 20, 0.02);
+    --beam-head: rgba(15, 20, 28, 0.94);
+    --beam-tail-1: rgba(15, 20, 28, 0.58);
+    --beam-tail-2: rgba(15, 20, 28, 0.28);
+    --beam-tail-3: rgba(15, 20, 28, 0.1);
+    --beam-tail-4: rgba(15, 20, 28, 0.02);
 
-    --glare-color: rgba(11, 14, 20, 0.1);
-    --focus-ring: rgba(11, 14, 20, 0.35);
+    --glare-color: rgba(15, 20, 28, 0.08);
+    --focus-ring: rgba(15, 20, 28, 0.35);
   }
 }
 
 :root[data-theme="light"] {
-  --bg-canvas: #f2f4f8;
-  --bg-elevated: #f8f9fc;
-  --surface-matte: rgba(255, 255, 255, 0.88);
-  --surface-matte-hover: rgba(255, 255, 255, 0.96);
-  --surface-input: rgba(255, 255, 255, 0.78);
-  --surface-backdrop: rgba(15, 23, 42, 0.28);
+  --bg-canvas: #e4e6eb;
+  --bg-elevated: #eceef3;
+  --surface-matte: #f6f7f9;
+  --surface-matte-hover: #fbfcfd;
+  --surface-input: #eceef3;
+  --surface-backdrop: rgba(15, 23, 42, 0.34);
 
-  --border-matte: rgba(15, 23, 42, 0.07);
-  --border-matte-hover: rgba(15, 23, 42, 0.14);
+  --border-matte: rgba(15, 23, 42, 0.11);
+  --border-matte-hover: rgba(15, 23, 42, 0.22);
 
-  --text-primary: #0b0e14;
-  --text-secondary: rgba(15, 23, 42, 0.66);
-  --text-muted: rgba(15, 23, 42, 0.45);
+  --text-primary: #0f141c;
+  --text-secondary: rgba(15, 20, 28, 0.72);
+  --text-muted: rgba(15, 20, 28, 0.52);
 
-  --glass-fill: rgba(255, 255, 255, 0.42);
-  --glass-fill-hover: rgba(255, 255, 255, 0.62);
-  --glass-fill-subtle: rgba(15, 23, 42, 0.04);
-  --glass-rim-base: rgba(11, 14, 20, 0.11);
+  --glass-fill: rgba(246, 247, 249, 0.85);
+  --glass-fill-hover: rgba(251, 252, 253, 0.96);
+  --glass-fill-subtle: rgba(15, 23, 42, 0.06);
+  --glass-rim-base: rgba(15, 20, 28, 0.16);
   --glass-shadow:
-    0 10px 26px -12px rgba(15, 23, 42, 0.14),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.75);
+    0 8px 22px -10px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.65);
   --matte-shadow:
-    0 8px 24px -14px rgba(15, 23, 42, 0.08);
+    0 6px 20px -10px rgba(15, 23, 42, 0.11);
 
   /* Pure black orbiting comet beam with fading tail on light canvas */
-  --beam-head: rgba(11, 14, 20, 0.92);
-  --beam-tail-1: rgba(11, 14, 20, 0.56);
-  --beam-tail-2: rgba(11, 14, 20, 0.26);
-  --beam-tail-3: rgba(11, 14, 20, 0.09);
-  --beam-tail-4: rgba(11, 14, 20, 0.02);
+  --beam-head: rgba(15, 20, 28, 0.94);
+  --beam-tail-1: rgba(15, 20, 28, 0.58);
+  --beam-tail-2: rgba(15, 20, 28, 0.28);
+  --beam-tail-3: rgba(15, 20, 28, 0.1);
+  --beam-tail-4: rgba(15, 20, 28, 0.02);
 
-  --glare-color: rgba(11, 14, 20, 0.1);
-  --focus-ring: rgba(11, 14, 20, 0.35);
+  --glare-color: rgba(15, 20, 28, 0.08);
+  --focus-ring: rgba(15, 20, 28, 0.35);
 }
 
 html {
@@ -264,31 +264,23 @@ body {
 }
 
 :root[data-theme="light"] .oled-matte-card {
-  background-image: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.94) 0%,
-    rgba(246, 248, 252, 0.88) 100%
-  );
+  background: var(--surface-matte);
 }
 
 :root[data-theme="light"] .liquid-glass-quiet {
-  background-color: rgba(255, 255, 255, 0.88);
-  border-color: rgba(15, 23, 42, 0.08);
-  box-shadow: 0 16px 38px -16px rgba(15, 23, 42, 0.16);
+  background-color: rgba(246, 247, 249, 0.92);
+  border-color: rgba(15, 23, 42, 0.14);
+  box-shadow: 0 14px 34px -14px rgba(15, 23, 42, 0.18);
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) .oled-matte-card {
-    background-image: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.94) 0%,
-      rgba(246, 248, 252, 0.88) 100%
-    );
+    background: var(--surface-matte);
   }
   :root:not([data-theme="dark"]) .liquid-glass-quiet {
-    background-color: rgba(255, 255, 255, 0.88);
-    border-color: rgba(15, 23, 42, 0.08);
-    box-shadow: 0 16px 38px -16px rgba(15, 23, 42, 0.16);
+    background-color: rgba(246, 247, 249, 0.92);
+    border-color: rgba(15, 23, 42, 0.14);
+    box-shadow: 0 14px 34px -14px rgba(15, 23, 42, 0.18);
   }
 }
 

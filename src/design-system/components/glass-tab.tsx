@@ -187,7 +187,7 @@ export function GlassTab({
           layoutId={`lg-tab-pill-${ctx.layoutId}`}
           transition={LIQUID_TAB_SPRING}
           aria-hidden="true"
-          className="absolute inset-0 rounded-xl border border-[var(--border-matte-hover)] bg-white/[0.08] backdrop-blur-md"
+          className="absolute inset-0 rounded-xl border border-[var(--border-matte-hover)] bg-[var(--glass-fill-subtle)] backdrop-blur-md"
         />
       ) : null}
       <span className="relative z-10 inline-flex items-center justify-center gap-1.5">
